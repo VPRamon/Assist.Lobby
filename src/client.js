@@ -302,4 +302,11 @@ enterRoom.addEventListener("click",function(e){
 });
 
 var active_box = "login_box";
-
+function displayMenu(box){
+	//console.log("switch to: ", box);
+	if(active_box != box){
+		document.getElementById(active_box).classList.toggle('selected');
+		document.getElementById(box).classList.toggle('selected');
+		active_box = box;
+	}	
+}
