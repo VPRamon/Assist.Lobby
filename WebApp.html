@@ -1,0 +1,81 @@
+<html>
+	<link href="style.css" rel="stylesheet">
+	<body>		
+		
+		<div class="popup active" id="popup-loginMenu">
+			<div class="overlay"></div>
+			<div class="content">
+				<div class="login_box selected" id="login_box">
+					<h1>Login</h1>
+					<p>Username</p>
+					<input id="username-loginInput" onclick='displayMenu("login_box")'></input>
+					<p>Password</p>
+					<input id="password-loginInput" onclick='displayMenu("login_box")'></input>
+					<div><button class= "popupButton" id="login">Login</button></div>
+				</div>
+				<div class="login_box" id="register_box">
+					<h1>Register</h1>
+					<p>Username</p>
+					<input id="username-registerInput" onclick='displayMenu("register_box")'></input>
+					<p>Password</p>
+					<input id="password-registerInput" onclick='displayMenu("register_box")'></input>
+					<div><button class= "popupButton" id="register">Register</button></div>
+				</div>
+			</div>
+		</div>		
+		
+		<div class="popup" id="popup-roomMenu">
+			<div class="overlay"></div>
+			<div class="content">
+				<div class="room_box">
+					<h1>Skin</h1>
+					<div>
+						<img class="skin selected"  id="skin0" src="resources/spritesheets/man1_skin.png" alt="man1_skin" width="32" height="64" onclick='selectSkin("0")'>
+						<img class="skin" id="skin1" src="resources/spritesheets/man2_skin.png" alt="man2_skin" width="32" height="64" onclick='selectSkin("1")'>
+						<img class="skin" id="skin2" src="resources/spritesheets/man3_skin.png" alt="man3_skin" width="32" height="64" onclick='selectSkin("2")'>
+						<img class="skin" id="skin3" src="resources/spritesheets/man4_skin.png" alt="man4_skin" width="32" height="64" onclick='selectSkin("3")'>
+					</div>
+					<div>
+						<img class="skin" id="skin4" src="resources/spritesheets/woman1_skin.png" alt="woman1_skin" width="32" height="64" onclick='selectSkin("4")'>
+						<img class="skin" id="skin5" src="resources/spritesheets/woman2_skin.png" alt="woman2_skin" width="32" height="64" onclick='selectSkin("5")'>
+						<img class="skin" id="skin6" src="resources/spritesheets/woman3_skin.png" alt="woman3_skin" width="32" height="64" onclick='selectSkin("6")'>
+						<img class="skin" id="skin7" src="resources/spritesheets/woman4_skin.png" alt="woman4_skin" width="32" height="64" onclick='selectSkin("7")'>
+					</div>
+				</div>
+				<div class="room_box">
+					<h1>Chat Room</h1>
+					<input id="room-input"></input>
+					<div><button class= "popupButton" id="enterRoom">Enter</button></div>
+				</div>
+			</div>
+		</div>
+
+		
+		<div class="hidden" id="content">
+			<div class="world" id="canvas-container" >
+				<h1 class="title-chat"> World </h1>
+				<canvas id="canvas" ></canvas>
+			</div>
+		
+		
+			<div class="chat_container hidden" id="id_chat_container" >
+				<h1 class="title-chat"> Room: <b id=room></b></h1>
+				<div class="messages_container" id="id_messages_container"></div>
+				<div class="input_container">
+					<textarea name="message-to-send" id="message-to-send" placeholder ="Type your message" rows="3" cols="150"></textarea><button id="send_button">SEND</button>			
+				</div>
+			</div>
+			
+		</div>
+	</body>
+	
+	
+	<canvas width="500" height="500"></canvas>
+	<script src="resources/libs/gl-matrix.js"></script>
+	<script src="resources/libs/litegl.js"></script>
+	<script src="https://tamats.com/projects/rendeer/build/rendeer.js"></script>
+	<script src="resources/libs/wbin.js"></script>
+	<script src="resources/libs/walkArea.js"></script>
+	<script src="src/code.js"></script>
+	<script src="src/client.js"></script>
+</html>
