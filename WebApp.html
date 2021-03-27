@@ -1,3 +1,6 @@
+<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+<meta content="utf-8" http-equiv="encoding">
+
 <html>
 	<link href="style.css" rel="stylesheet">
 	<body>		
@@ -8,18 +11,18 @@
 				<div class="login_box selected" id="login_box">
 					<h1>Login</h1>
 					<p>Username</p>
-					<input id="username-loginInput" onclick='displayMenu("login_box")'></input>
+					<input id="usernameLogin_txt" onclick='displayMenu("login_box")'></input>
 					<p>Password</p>
-					<input id="password-loginInput" onclick='displayMenu("login_box")'></input>
-					<div><button class= "popupButton" id="login">Login</button></div>
+					<input id="passwordLogin_txt" onclick='displayMenu("login_box")' </input>
+					<div><button class= "popupButton" id="login_btn">Login</button></div>
 				</div>
 				<div class="login_box" id="register_box">
 					<h1>Register</h1>
 					<p>Username</p>
-					<input id="username-registerInput" onclick='displayMenu("register_box")'></input>
+					<input id="usernameRegister_txt" onclick='displayMenu("register_box")'></input>
 					<p>Password</p>
-					<input id="password-registerInput" onclick='displayMenu("register_box")'></input>
-					<div><button class= "popupButton" id="register">Register</button></div>
+					<input id="passwordRegister_txt" onclick='displayMenu("register_box")'></input>
+					<div><button class= "popupButton" id="register_btn">Register</button></div>
 				</div>
 			</div>
 		</div>		
@@ -44,8 +47,8 @@
 				</div>
 				<div class="room_box">
 					<h1>Chat Room</h1>
-					<input id="room-input"></input>
-					<div><button class= "popupButton" id="enterRoom">Enter</button></div>
+					<input id="room_txt"></input>
+					<div><button class= "popupButton" id="enterRoom_btn">Enter</button></div>
 				</div>
 			</div>
 		</div>
@@ -62,7 +65,7 @@
 				<h1 class="title-chat"> Room: <b id=room></b></h1>
 				<div class="messages_container" id="id_messages_container"></div>
 				<div class="input_container">
-					<textarea name="message-to-send" id="message-to-send" placeholder ="Type your message" rows="3" cols="150"></textarea><button id="send_button">SEND</button>			
+					<textarea name="message-to-send" id="sendMessage_txt" placeholder ="Type your message" rows="3" cols="150"></textarea><button id="sendMessage_btn">SEND</button>			
 				</div>
 			</div>
 			
@@ -78,4 +81,6 @@
 	<script src="resources/libs/walkArea.js"></script>
 	<script src="src/code.js"></script>
 	<script src="src/client.js"></script>
+	<script src="src/visual.js"></script>
+
 </html>
