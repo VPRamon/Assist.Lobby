@@ -53,13 +53,11 @@ function info_to_send(_user){
 	this.room= _user.room;	
 }
 
-// call this when somebody connects to your WebsocketServer
-function onUserConnected( connection, info ){
-	var cliente_en_database=0;
+function onUserLogin( connection, info ){
+	console.log("new login attempt.");
 	var client = mysql.createConnection({  database:'ecv-2019', user: 'ecv-user',  password: 'ecv-upf-2019',  host: '127.0.0.1'});
-	console.log(info.username);
-	console.log(info.password);
-	//fara la comprobacio si hi ha usuari i password 
+	
+	// Check username and password
 	client.query( 'SELECT username FROM Vinicius_users WHERE username=? AND password=? ',[info.username, info.password],
 		function selectUsuario(err, results, fields) {
 	 
@@ -67,39 +65,58 @@ function onUserConnected( connection, info ){
 			console.log("Error: " + err.message);
 			throw err;
 		}
-	 
-		console.log("Number of rows: "+results.length);
-		console.log(results);
+	 	
+		var msg = {
+			type: "login",
+			content: 0			
+		};
+		
 		if(results.length==1){
-			cliente_en_database=1;
-			console.log("llistaa");
-			console.log(cliente_en_database);
-			var msg_id = {
-				type: "login",
-				content: 1			
-			};
-			connection.send(JSON.stringify(msg_id));
-			
+			console.log("successful login!");
+			msg.content = 1;			
 		}
 		else{
-			console.log("llistaa2222");
-			console.log(cliente_en_database);
-			var msg_id = {
-				type: "login",
-				content: 0			
-			};
-			connection.send(JSON.stringify(msg_id));
-		}
-	 
+			console.log("login error!");
+		}	 
+		connection.send(JSON.stringify(msg));
 		client.end();
-	});
-	
-	
-	
-	
+	});	
 }
 
-function enterRoom(connection, info){
+function onUserRegister( connection, info ){
+	console.log("new register attempt.");
+
+	var client = mysql.createConnection({  database:'ecv-2019', user: 'ecv-user',  password: 'ecv-upf-2019',  host: '127.0.0.1'});
+	
+	client.query( 'SELECT username FROM Vinicius_users WHERE username=?',[info.username],
+		function selectUsuario(err, results, fields) {	 
+		if (err) {
+			console.log("Error: " + err.message);
+			throw err;
+		}
+	 	
+		var msg = {
+			type: "register",
+			content: 0	
+		};
+		
+		if(results.length==0){
+			client.query(
+			  'INSERT INTO Vinicius_users SET username = ?, password = ?', [info.username, info.password]
+			);
+			msg.content = 1;			
+			console.log("successful register!");
+		}
+		else{
+			console.log("username "+info.username+" already exists!");
+		}
+						
+		connection.send(JSON.stringify(msg));
+		client.end();
+	});
+}
+
+function onEnterRoom(connection, info){
 	new_user = new user( connection, id, info);
 	console.log(info);
 	var msg_id = {
@@ -135,11 +152,6 @@ function enterRoom(connection, info){
 		if(USERS[i].connection != connection && USERS[i].room == info.room) 
 			USERS[i].connection.send(user_properties_str);
 	}
-	
-	
-	
-	
-	
 }
 
 // call when we receive a message from a WebSocket
@@ -181,47 +193,6 @@ function onUserUpdate( connection, msg ){
 	}
 }
 
-function User_Register( connection, msg ){
-	
- 
-	var client = mysql.createConnection({  database:'ecv-2019', user: 'ecv-user',  password: 'ecv-upf-2019',  host: '127.0.0.1'});
-	
-	client.query( 'SELECT username FROM Vinicius_users WHERE username=?',[msg.username],
-		function selectUsuario(err, results, fields) {
-	 
-		if (err) {
-			console.log("Error: " + err.message);
-			throw err;
-		}
-	 
-		console.log("Number of rows: "+results.length);
-		console.log(results);
-		if(results.length==0){
-			client.query(
-			  'INSERT INTO Vinicius_users SET username = ?, password = ?',
-			  [msg.username, msg.password]
-			);
-			console.log("llistaa");
-			console.log(cliente_en_database);
-			var msg_id = {
-				type: "login",
-				content: 1			
-			};
-			connection.send(JSON.stringify(msg_id));
-			
-		}
-	 
-		client.end();
-	});
-	
-	
-	
-
-	
-	
-	
-}
-
 // call when we a user disconnects
 function onUserDisconected( connection ){
 	var disconnected_user_id;
@@ -241,11 +212,9 @@ function onUserDisconected( connection ){
 				id: disconnected_user_id
 			};
 			USERS[i].connection.send( JSON.stringify(msg_disconnected) );
-		}
-		
+		}		
 	}
 }
-
 
 wsServer = new WebSocketServer({ httpServer: server });
 
@@ -253,7 +222,6 @@ wsServer = new WebSocketServer({ httpServer: server });
 wsServer.on('request', function(request) {
     var connection = request.accept(null, request.origin);
 		
-    //connection.sendUTF("hello");
     // This is the most important callback for us, we'll handle all messages from users here.
     connection.on('message', function(message) {
 		//console.log(message);
@@ -268,22 +236,26 @@ wsServer.on('request', function(request) {
 					break;
 					
 				case("login"):
-					onUserConnected( connection , msg  );
+					onUserLogin( connection , msg  );
+					break;
+				
+				case("register"):
+					console.log("new registration");
+					onUserRegister( connection, msg );
+					break;
+				
+				case("room"):
+					onEnterRoom( connection, msg );
 					break;
 					
 				case("update"):
 					onUserUpdate( connection, msg );
 					break;
-				case("register"):
-					console.log("llega");
-					User_Register( connection, msg );
-					break;
-				case("room"):
-					enterRoom( connection, msg );
-					break;
-			}   
+					
+			}
         }
     });
+	
     connection.on('close', function(connection) {
         // close user connection
 		onUserDisconected(connection);

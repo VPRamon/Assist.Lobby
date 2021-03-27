@@ -8,11 +8,13 @@ var myPorfile ={
 };
 
 function loginResponse(){};
+function registerResponse(){};
 function showMessage(){};
 
 function Connection(){
 	
-	this.socket = ""//new WebSocket("wss://ecv-etic.upf.edu/node/9022/ws/" );	
+	//this.socket = new WebSocket("wss://ecv-etic.upf.edu/node/9022/ws/" );	
+	this.socket = new WebSocket("ws://127.0.0.1:9022" );
 	
 	this.socket.onopen = function(){  
 		console.log("Socket has been opened! :)");
@@ -95,6 +97,10 @@ function Connection(){
 			case("login"):
 				loginResponse(msg.content);
 				break;
+			
+			case("register"):
+				registerResponse(msg.content);
+				break;
 		}
 			
 	}
@@ -120,7 +126,7 @@ function loginUser(username, password){
 function registerUser(username, password){
 	myPorfile.username=username;
 	var msg = {
-			type:"login",
+			type:"register",
 			username:username,
 			password:password
 	};				

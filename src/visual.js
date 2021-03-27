@@ -125,6 +125,18 @@ function loginResponse(pass){
 		//try again
 	}
 }
+function registerResponse(pass){
+	if(pass == 1){
+		console.log("Succesfful Register!");
+		console.log("Loged In!!");
+		document.getElementById("popup-loginMenu").classList.toggle("active");	
+		document.getElementById('popup-roomMenu').classList.toggle('active');
+	}
+	else{
+		console.log("Register IN FAILED!!");
+		//try again
+	}
+}
 
 send_btn.addEventListener("click",function(e){	
 	msg_txt = message_txt.value;
@@ -157,7 +169,7 @@ register_btn.addEventListener("click",function(e){
 });
 
 enterRoom_btn.addEventListener("click",function(e){
-	room = document.getElementById("#room_txt").value;		
+	room = document.querySelector("#room_txt").value;		
 	if(room != ""){
 		requestRoom(room);
 		document.getElementById("popup-roomMenu").classList.toggle("active");	
