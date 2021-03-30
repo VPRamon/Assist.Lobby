@@ -4,6 +4,7 @@ var send_btn = document.querySelector("#sendMessage_btn");
 var login_btn= document.querySelector("#login_btn");
 var register_btn= document.querySelector("#register_btn");
 var enterRoom_btn= document.querySelector("#enterRoom_btn");
+var unfoldChat_btn= document.querySelector("#imageChat");
 
 
 var canvas = document.querySelector("#canvas");
@@ -125,6 +126,7 @@ function loginResponse(pass){
 		//try again
 	}
 }
+
 function registerResponse(pass){
 	if(pass == 1){
 		console.log("Succesfful Register!");
@@ -142,7 +144,7 @@ send_btn.addEventListener("click",function(e){
 	msg_txt = message_txt.value;
 	if(msg_txt != ""){
 		sendMessage(msg_txt);
-		text_input.value="";
+		message_txt.value="";
 	}
 });
 
@@ -175,8 +177,12 @@ enterRoom_btn.addEventListener("click",function(e){
 	document.getElementById("popup-roomMenu").classList.toggle("active");	
 	document.getElementById('content').classList.toggle('hidden');
 	init()
-		
 });
+
+unfoldChat_btn.addEventListener("click",function(e){
+	document.getElementById("id_chat_container").classList.toggle("hidden");
+});
+
 
 var active_box = "login_box";
 function displayMenu(box){
@@ -188,6 +194,14 @@ function displayMenu(box){
 	}	
 }
 
-//canvas_coords = document.getElementById('canvas').getBoundingClientRect();
-//canvas.width = window.innerWidth - canvas_coords.x;
-//canvas.height = window.innerHeight - canvas_coords.y;
+function setChatPosition(){
+	canvas_y_coord = document.getElementById('canvas').getBoundingClientRect().y;
+	canvas_x_coord = document.getElementById('canvas').getBoundingClientRect().x;
+
+	document.getElementById("imageChat").style.top = canvas_y_coord + 5;
+	document.getElementById("imageChat").style.right = canvas_x_coord + 5;
+	
+	document.getElementById("id_chat_container").style.top = canvas_y_coord + 55;
+	document.getElementById("id_chat_container").style.right = canvas_x_coord + 55;
+
+}

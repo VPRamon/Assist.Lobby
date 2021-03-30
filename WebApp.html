@@ -61,13 +61,13 @@
 		
 		<div class="hidden" id="content">
 			<div class="world" id="canvas-container" >
-				<h1 class="title-chat"> World </h1>
+				<h1 class="room_title"> Waiting room </h1>
 				<canvas id="canvas" ></canvas>
 			</div>
+			<img id="imageChat" class="imageChat" src="resources/chat_icon.png" />
 		
-		
-			<div class="chat_container hidden" id="id_chat_container" >
-				<h1 class="title-chat"> Room: <b id=room></b></h1>
+			<div id="id_chat_container" class="chat_container hidden" >
+				<p id="chat_title" class="chat_title">Chat</p>
 				<div class="messages_container" id="id_messages_container"></div>
 				<div class="input_container">
 					<textarea name="message-to-send" id="sendMessage_txt" placeholder ="Type your message" rows="3" cols="150"></textarea><button id="sendMessage_btn">SEND</button>			

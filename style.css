@@ -14,6 +14,7 @@ textarea{
 	padding-right:2%;
 	overflow:auto;
 	resize:none;
+	border-bottom-left-radius:10px;
 }
 
 .world{		
@@ -25,42 +26,52 @@ textarea{
 	//overflow-y: scroll;
 }
 
+.imageChat {
+	position: absolute;
+	cursor:pointer;
+	width: 50px;
+	height: 50px;	
+}
+
 .hidden{
 	display:none;
 }
 
 .chat_container{
+	position: absolute;
 	color: black;
 	background: #86BB71;
 	float: left;
 	width: 40%;
-	height: 60;
-}
+	height: 50%;
+	border-radius: 10px;
 
+}
+.chat_title{
+	display: flex;
+  	justify-content: center;
+}
 .input_container{
 	display: grid;
 	grid-template-columns: 80% 20%;
 }
 
-h1.title{
+.room_title{
 	background: green;
 	padding-left: 10px;
 	border-radius: 10px;
-}
-
-h1.title-chat{
 	display: flex;
   	justify-content: center;
-	background: green;
 }
+
 
 .messages_container{
 	background: white;
-	border: black 5px solid;
 	width: 99%;
 	height: 80%;
 	overflow: auto;
 }
+
 
 .chat_2{
 	width:100%;

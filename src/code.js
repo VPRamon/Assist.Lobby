@@ -1,7 +1,10 @@
+
 //setup context
 var canvas = document.querySelector("canvas");
 var gl = GL.create({canvas: canvas});
 var freecam = false;
+
+function setChatPosition(){};
 
 gl.captureMouse();
 gl.captureKeys();
@@ -276,6 +279,7 @@ function init()
 {
 	//start loop
 	loop();
+	setChatPosition();
 }
 
 //init();

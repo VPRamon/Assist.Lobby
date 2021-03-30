@@ -9,7 +9,7 @@ var myPorfile ={
 
 function loginResponse(){};
 function registerResponse(){};
-function showMessage(){};
+function showMessage(txt){};
 
 function Connection(){
 	
@@ -143,7 +143,7 @@ function requestRoom(category){
 	socket.socket.send(JSON.stringify(msg));
 }
 
-function sendMessage(){
+function sendMessage(txt){
 	var msg = {
 		type: "text",
 		content:txt,
