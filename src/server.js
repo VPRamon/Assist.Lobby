@@ -1,6 +1,7 @@
 var WebSocketServer = require('websocket').server;
 var http = require('http');
 var url = require('url');
+var crypto = require('crypto');
 var mysql = require('mysql');
 //example of simple users database
 var USERS = [];
@@ -55,10 +56,17 @@ function info_to_send(_user){
 
 function onUserLogin( connection, info ){
 	console.log("new login attempt.");
-	var client = mysql.createConnection({  database:'ecv-2019', user: 'ecv-user',  password: 'ecv-upf-2019',  host: '127.0.0.1'});
+	var client = mysql.createConnection({  
+		database:'ecv-2019', 
+		user: 'ecv-user', 
+		password: 'ecv-upf-2019',  
+		host: '127.0.0.1'
+	});
 	
+	let md5 = crypto.createHmac("md5","my_salt_2017*(D-R)");
+	enc_password = md5.update(info.password).digest("hex");
 	// Check username and password
-	client.query( 'SELECT username FROM Vinicius_users WHERE username=? AND password=? ',[info.username, info.password],
+	client.query( 'SELECT is_employee FROM Vinicius_users WHERE username=? AND password=? ',[info.username, enc_password],
 		function selectUsuario(err, results, fields) {
 	 
 		if (err) {
@@ -68,12 +76,16 @@ function onUserLogin( connection, info ){
 	 	
 		var msg = {
 			type: "login",
-			content: 0			
+			content: "error"			
 		};
 		
 		if(results.length==1){
 			console.log("successful login!");
-			msg.content = 1;			
+			if(results[0].is_employee==1){
+				msg.content = "employee";
+			}else if(results[0].is_employee==0){
+				msg.content = "client";
+			}
 		}
 		else{
 			console.log("login error!");
@@ -85,8 +97,8 @@ function onUserLogin( connection, info ){
 
 function onUserRegister( connection, info ){
 	console.log("new register attempt.");
-
 	var client = mysql.createConnection({  database:'ecv-2019', user: 'ecv-user',  password: 'ecv-upf-2019',  host: '127.0.0.1'});
+	
 	
 	client.query( 'SELECT username FROM Vinicius_users WHERE username=?',[info.username],
 		function selectUsuario(err, results, fields) {	 
@@ -101,8 +113,10 @@ function onUserRegister( connection, info ){
 		};
 		
 		if(results.length==0){
+			let md5 = crypto.createHmac("md5","my_salt_2017*(D-R)");
+			enc_password = md5.update(info.password).digest("hex");
 			client.query(
-			  'INSERT INTO Vinicius_users SET username = ?, password = ?', [info.username, info.password]
+			  'INSERT INTO Vinicius_users SET username = ?, password = ?', [info.username, enc_password]
 			);
 			msg.content = 1;			
 			console.log("successful register!");

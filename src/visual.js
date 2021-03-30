@@ -116,14 +116,20 @@ function showMessage(msg, type){
 }
 
 function loginResponse(pass){
-	if(pass == 1){
-		console.log("Loged In!!");
-		document.getElementById("popup-loginMenu").classList.toggle("active");	
-		document.getElementById('popup-roomMenu').classList.toggle('active');
-	}
-	else{
-		console.log("Loged IN FAILED!!");
-		//try again
+	switch(pass){
+		case("client"):
+			console.log("Loged In as client!!");
+			document.getElementById("popup-loginMenu").classList.toggle("active");	
+			document.getElementById('popup-roomMenu').classList.toggle('active');
+			break;
+		case("employee"):
+			console.log("Loged In as employee!!");
+			document.getElementById("popup-loginMenu").classList.toggle("active");	
+			document.getElementById('popup-roomMenu').classList.toggle('active');
+			break;
+		 default:
+			console.log("Loged IN FAILED!! response ",pass);				
+
 	}
 }
 
@@ -182,7 +188,6 @@ enterRoom_btn.addEventListener("click",function(e){
 unfoldChat_btn.addEventListener("click",function(e){
 	document.getElementById("id_chat_container").classList.toggle("hidden");
 });
-
 
 var active_box = "login_box";
 function displayMenu(box){
