@@ -76,11 +76,12 @@ var skeleton = new RD.Skeleton(); //skeleton for blending
 //draws the whole frame
 function draw()
 {
-	if(!freecam)
-		camera.lookAt( camera.position, character.localToGlobal([0,70,0]), [0,1,0] );
-
-	canvas.width = window.innerWidth;
-	canvas.height = window.innerHeight;
+	canvas_coords = document.getElementById('content').clientHeight;
+	
+	//if(!freecam)
+	//	camera.lookAt( camera.position, character.localToGlobal([0,70,0]), [0,1,0] );
+	canvas.width = document.getElementById('canvas-container').clientWidth;//window.innerWidth;
+	canvas.height = document.getElementById('canvas-container').clientHeight;//window.innerHeight;
 	camera.perspective(camera.fov,canvas.width / canvas.height,0.1,1000); //to render in perspective mode
 
 	//clear

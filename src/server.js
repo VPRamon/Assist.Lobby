@@ -117,7 +117,7 @@ function onUserRegister( connection, info ){
 }
 
 function onEnterRoom(connection, info){
-	new_user = new user( connection, id, info);
+	/*new_user = new user( connection, id, info);
 	console.log(info);
 	var msg_id = {
 		type: "my_id",
@@ -151,7 +151,7 @@ function onEnterRoom(connection, info){
 	for(var i = 0; i < USERS.length; i++){
 		if(USERS[i].connection != connection && USERS[i].room == info.room) 
 			USERS[i].connection.send(user_properties_str);
-	}
+	}*/
 }
 
 // call when we receive a message from a WebSocket

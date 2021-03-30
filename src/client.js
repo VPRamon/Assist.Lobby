@@ -133,12 +133,12 @@ function registerUser(username, password){
 	socket.socket.send(JSON.stringify(msg));
 }
 
-function requestRoom(room){
-	myPorfile.room=room;
+function requestRoom(category){
+	myPorfile.category=category;
 	var msg = {
 			type:"room",
 			username:myPorfile.username,
-			room:room
+			category:category
 	};				
 	socket.socket.send(JSON.stringify(msg));
 }

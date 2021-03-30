@@ -169,14 +169,13 @@ register_btn.addEventListener("click",function(e){
 });
 
 enterRoom_btn.addEventListener("click",function(e){
-	room = document.querySelector("#room_txt").value;		
-	if(room != ""){
-		requestRoom(room);
-		document.getElementById("popup-roomMenu").classList.toggle("active");	
-		document.getElementById('content').classList.toggle('hidden');
-		init()
-	}
+	category = document.querySelector("#category_dropDown").value;		
 	
+	requestRoom(category);
+	document.getElementById("popup-roomMenu").classList.toggle("active");	
+	document.getElementById('content').classList.toggle('hidden');
+	init()
+		
 });
 
 var active_box = "login_box";
@@ -188,3 +187,7 @@ function displayMenu(box){
 		active_box = box;
 	}	
 }
+
+//canvas_coords = document.getElementById('canvas').getBoundingClientRect();
+//canvas.width = window.innerWidth - canvas_coords.x;
+//canvas.height = window.innerHeight - canvas_coords.y;
