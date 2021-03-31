@@ -23,7 +23,7 @@ var employee = function(con, id, username){
 }
 
 var user = function(con, id, username, skin, category){
-    this.connection=con;
+    //this.connection=con;
     this.id=id;
 	this.username=username;
 	this.skin=skin;
@@ -34,7 +34,7 @@ var user = function(con, id, username, skin, category){
 
 var waitingRoom = function(id){
 	this.id = id;
-	this.limit = 10;
+	this.limit = 3;
 	this.list_of_users = [];
 	var that = this;
 	this.len = function(){
@@ -85,6 +85,7 @@ var office = function(employee){
 var Database = function(){
 
 	var that = this;
+	this.onlineClients = {}
 	this.list_of_cat = [];
 	this.list_of_offices = [];
 	
@@ -103,22 +104,21 @@ var Database = function(){
 			that.list_of_cat.push([new waitingRoom(0)]); 
 	}
 	
-	this.add_user_to_wr = function(user){
-		cat_index = cat_dict[user.category];
-		//console.log(that.list_of_cat[cat_index]);
-		let i=0;
-		for (i = 0; i < that.list_of_cat[cat_index].length; i++) { 
+	this.add_user_to_wr = function(user_id, category){		
+		let room=0;
+		for (room = 0; room < that.list_of_cat[category].length; room++) { 
 			// if room is not full -> add user
-			if(that.list_of_cat[cat_index][i].len() < that.list_of_cat[cat_index][i].limit){
-				that.list_of_cat[cat_index][i].onNewUser(user);
-				return(i);
+			if(that.list_of_cat[category][room].len() < that.list_of_cat[category][room].limit){
+				that.list_of_cat[category][room].onNewUser(user_id);
+				DB.onlineClients[user_id].room = room;
+				return room;
 			}
 		}
 		// if all rooms are full -> create new room & add user
-		that.new_wr(cat_index);
-		that.list_of_cat[cat_index][i].onNewUser(user);
-		console.log(that.list_of_cat[cat_index]);
-		return that.list_of_cat[cat_index].length;
+		that.new_wr(category);
+		that.list_of_cat[category][room].onNewUser(user_id);
+		DB.onlineClients[user_id].room = room;
+		return room;
 	}
 }
 
@@ -171,11 +171,13 @@ function onUserLogin( connection, info ){
 		if(results.length==1){
 			console.log("successful login!");
 			msg.id = results[0].user_id;
+			connection['id'] = results[0].user_id;
 			if(results[0].is_employee==1){
 				msg.role = "employee";
-				DB.new_office( new employee(connection, results[0].id, info.username) );
-											
+				DB.new_office( new employee(connection, results[0].user_id, info.username) );
+				
 			}else if(results[0].is_employee==0){
+				DB.onlineClients[results[0].user_id] = new user(connection, results[0].user_id, info.username);
 				msg.role = "client";
 			}
 		}
@@ -224,7 +226,8 @@ function onUserRegister( connection, info ){
 
 				if(results.length==1){
 					msg.id = results[0].user_id;
-					DB.new_office( new employee(connection, results[0].id, info.username) );
+					connection['id'] = results[0].user_id;
+					DB.onlineClients[results[0].user_id] = new user(connection, results[0].user_id, info.username);
 				}
 				else{
 					console.log("login error after register!");
@@ -234,6 +237,7 @@ function onUserRegister( connection, info ){
 		}
 		else{
 			console.log("username "+info.username+" already exists!");
+			// to do (send error to client)
 		}
 						
 		connection.send(JSON.stringify(msg));
@@ -242,11 +246,10 @@ function onUserRegister( connection, info ){
 }
 
 function onEnterRoom(connection, info){
-	//console.log("user: "+info.username+" requests room");
-	//console.log(info.id, info.username, info.skin, info.category);
-	let client = new user(connection, info.id, info.username, info.skin, info.category)
-	//console.log(client);
-	DB.add_user_to_wr(client);
+	//console.log(info.id);
+	//console.log(DB.onlineClients);
+	DB.onlineClients[info.id].category = info.category;
+	DB.add_user_to_wr(info.id, cat_dict[info.category]);
 	
 	/*new_user = new user( connection, id, info);
 	console.log(info);
@@ -287,7 +290,9 @@ function onEnterRoom(connection, info){
 
 // call when we receive a message from a WebSocket
 function onUserMessage( connection, msg ){
-	var msg_final = JSON.stringify(msg);
+	console.log(connection.id);
+	DB
+	/*var msg_final = JSON.stringify(msg);
 	console.log("Sending Message",msg_final);
 	
 	//for every user connected...
@@ -304,7 +309,7 @@ function onUserMessage( connection, msg ){
 		// avoid feedback
 		if(user.connection != connection  && user.room == my_user.room && (Math.sqrt( Math.pow( Math.abs(my_user.posx - user.posx )  ,2)+  Math.pow( Math.abs(my_user.posy - user.posy )  ,2) ) < 300) ) 
 			user.connection.send( msg_final );
-	}
+	}*/
 }
 
 // call when we a user updates its position
@@ -326,7 +331,8 @@ function onUserUpdate( connection, msg ){
 
 // call when we a user disconnects
 function onUserDisconected( connection ){
-	var disconnected_user_id;
+	
+	/*var disconnected_user_id;
 	//console.log("User disconnected",USERS); 
 	for(var i = 0; i < USERS.length; i++){		
 		if(USERS[i].connection.state == 'closed'){
@@ -344,7 +350,7 @@ function onUserDisconected( connection ){
 			};
 			USERS[i].connection.send( JSON.stringify(msg_disconnected) );
 		}		
-	}
+	}*/
 }
 
 var server = http.createServer( function(request, response) {
@@ -363,7 +369,6 @@ server.listen(9022, function() {
 
 wsServer = new WebSocketServer({ httpServer: server });
 
-
 // Add event handler when one user connects
 wsServer.on('request', function(request) {
     var connection = request.accept(null, request.origin);
@@ -375,7 +380,7 @@ wsServer.on('request', function(request) {
 			var msg = JSON.parse( message.utf8Data );	
 			switch(msg.type){			
 				case("text"):
-					console.log("received Message",message);
+					//console.log("received Message",message);
 					// process WebSocket message				
 					onUserMessage( connection, msg );
 					break;

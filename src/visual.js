@@ -125,7 +125,8 @@ function loginResponse(pass){
 		case("employee"):
 			console.log("Loged In as employee!!");
 			document.getElementById("popup-loginMenu").classList.toggle("active");	
-			document.getElementById('popup-roomMenu').classList.toggle('active');
+			document.getElementById('content').classList.toggle('hidden');
+			init()
 			break;
 		 default:
 			console.log("Loged IN FAILED!! response ",pass);
