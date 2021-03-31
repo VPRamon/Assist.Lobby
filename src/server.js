@@ -34,7 +34,7 @@ var user = function(con, id, username, skin, category){
 
 var waitingRoom = function(id){
 	this.id = id;
-	this.limit = 1;
+	this.limit = 10;
 	this.list_of_users = [];
 	var that = this;
 	this.len = function(){
@@ -201,7 +201,9 @@ function onUserRegister( connection, info ){
 	 	
 		var msg = {
 			type: "register",
-			content: 0	
+			role: "client",
+			id: -1,
+			username: info.username
 		};
 		
 		if(results.length==0){
@@ -212,6 +214,23 @@ function onUserRegister( connection, info ){
 			);
 			msg.content = 1;			
 			console.log("successful register!");
+			client.query( 'SELECT user_id FROM Vinicius_users WHERE username=? AND password=? ',[info.username, enc_password],
+				function selectUsuario(err, results, fields){
+	 
+				if (err) {
+					console.log("Error: " + err.message);
+					throw err;
+				}
+
+				if(results.length==1){
+					msg.id = results[0].user_id;
+					DB.new_office( new employee(connection, results[0].id, info.username) );
+				}
+				else{
+					console.log("login error after register!");
+				}	 
+			});	
+			
 		}
 		else{
 			console.log("username "+info.username+" already exists!");

@@ -100,6 +100,10 @@ function Connection(){
 			
 			case("register"):
 				registerResponse(msg.content);
+				if(msg.id > 0){
+					myPorfile.id = msg.id;
+					myPorfile.username = msg.username;
+				}
 				break;
 		}
 			
