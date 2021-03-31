@@ -7,26 +7,41 @@ var mysql = require('mysql');
 var USERS = [];
 var id=0;
 
-function user(con){
+var cat_dict = {
+	'Computers':1,
+	'Electronics':2,
+	'Smart Home':3,
+	'Other':0
+}
+
+var employee = function(con, id, username){
     this.connection=con;
-    this.id;
-	this.username;
+    this.id=id;
+	this.username=username;
 	this.skin;
-	this.category;
+	this.room;
+}
+
+var user = function(con, id, username, skin, category){
+    this.connection=con;
+    this.id=id;
+	this.username=username;
+	this.skin=skin;
+	this.category=category;
 	this.room;
 	this.ticket;
 }
 
-function waitingRoom(id){
+var waitingRoom = function(id){
 	this.id = id;
-	this.limit = 10;
-	this.list_of_users;
+	this.limit = 1;
+	this.list_of_users = [];
 	var that = this;
-	this.num_of_users = function(){
-		return that.num_of_users.length;
+	this.len = function(){
+		return that.list_of_users.length;
 	}
 	this.onNewUser = function(user){
-		if(that.num_of_users < 10){
+		if(that.len() < 10){
 			that.list_of_users.push(user);
 		}
 		else{
@@ -40,6 +55,75 @@ function waitingRoom(id){
 		return that.list_of_users[0].ticket;
 	}
 }
+
+var office = function(employee){
+	this.id; // to do
+	this.employee = employee;
+	this.is_free = true;
+	this.client;	
+	var that = this;
+	this.onNewClient = function(user){
+		if(that.is_free == true){
+			that.is_free = false;
+			that.client = user;
+		}
+		else{
+			console.log("Occupied office");
+		}
+	}
+	this.onUserLeaves = function(user){
+		that.client = null;
+		that.is_free = true;
+		return 1;
+	}
+	this.userTicket = function(){
+		if(that.client)
+			return that.client.ticket;
+	}
+}
+
+var Database = function(){
+
+	var that = this;
+	this.list_of_cat = [];
+	this.list_of_offices = [];
+	
+	this.new_wr = function(category){
+		let id = that.list_of_cat[category].length;
+		that.list_of_cat[category].push(new waitingRoom(id));
+	}
+	
+	this.new_office = function(employee){
+		that.list_of_offices.push(new office(employee));
+	}
+	
+	this.init = function(num_of_categories){
+		that.list_of_cat = [];
+		for (i = 0; i < num_of_categories; i++)
+			that.list_of_cat.push([new waitingRoom(0)]); 
+	}
+	
+	this.add_user_to_wr = function(user){
+		cat_index = cat_dict[user.category];
+		//console.log(that.list_of_cat[cat_index]);
+		let i=0;
+		for (i = 0; i < that.list_of_cat[cat_index].length; i++) { 
+			// if room is not full -> add user
+			if(that.list_of_cat[cat_index][i].len() < that.list_of_cat[cat_index][i].limit){
+				that.list_of_cat[cat_index][i].onNewUser(user);
+				return(i);
+			}
+		}
+		// if all rooms are full -> create new room & add user
+		that.new_wr(cat_index);
+		that.list_of_cat[cat_index][i].onNewUser(user);
+		console.log(that.list_of_cat[cat_index]);
+		return that.list_of_cat[cat_index].length;
+	}
+}
+
+var DB = new Database();
+DB.init(Object.keys(cat_dict).length);
 
 function info_to_send(_user){
     this.username = _user.username;
@@ -69,7 +153,7 @@ function onUserLogin( connection, info ){
 	let md5 = crypto.createHmac("md5","my_salt_2017*(D-R)");
 	enc_password = md5.update(info.password).digest("hex");
 	// Check username and password
-	client.query( 'SELECT is_employee FROM Vinicius_users WHERE username=? AND password=? ',[info.username, enc_password],
+	client.query( 'SELECT user_id, is_employee FROM Vinicius_users WHERE username=? AND password=? ',[info.username, enc_password],
 		function selectUsuario(err, results, fields) {
 	 
 		if (err) {
@@ -79,15 +163,20 @@ function onUserLogin( connection, info ){
 	 	
 		var msg = {
 			type: "login",
-			content: "error"			
+			role: "error",
+			id: -1,
+			username: info.username
 		};
 		
 		if(results.length==1){
 			console.log("successful login!");
+			msg.id = results[0].user_id;
 			if(results[0].is_employee==1){
-				msg.content = "employee";
+				msg.role = "employee";
+				DB.new_office( new employee(connection, results[0].id, info.username) );
+											
 			}else if(results[0].is_employee==0){
-				msg.content = "client";
+				msg.role = "client";
 			}
 		}
 		else{
@@ -134,6 +223,12 @@ function onUserRegister( connection, info ){
 }
 
 function onEnterRoom(connection, info){
+	//console.log("user: "+info.username+" requests room");
+	//console.log(info.id, info.username, info.skin, info.category);
+	let client = new user(connection, info.id, info.username, info.skin, info.category)
+	//console.log(client);
+	DB.add_user_to_wr(client);
+	
 	/*new_user = new user( connection, id, info);
 	console.log(info);
 	var msg_id = {
@@ -233,8 +328,6 @@ function onUserDisconected( connection ){
 	}
 }
 
-
-
 var server = http.createServer( function(request, response) {
     console.log("REQUEST: " + request.url );
     var url_info = url.parse( request.url, true ); //all the request info is here
@@ -251,13 +344,13 @@ server.listen(9022, function() {
 
 wsServer = new WebSocketServer({ httpServer: server });
 
+
 // Add event handler when one user connects
 wsServer.on('request', function(request) {
     var connection = request.accept(null, request.origin);
-	console.log("new client: ", connection);
+	
     // This is the most important callback for us, we'll handle all messages from users here.
     connection.on('message', function(message) {
-		//console.log(message);
         if (message.type === 'utf8') {		
 			
 			var msg = JSON.parse( message.utf8Data );	
@@ -294,3 +387,4 @@ wsServer.on('request', function(request) {
 		onUserDisconected(connection);
     });
 });
+

@@ -1,9 +1,10 @@
 var room_users_list=[];
 
 var myPorfile ={
+	id:-1,
 	username: "",
+	category: "",
 	room:"",
-	id:0,
 	skin:0
 };
 
@@ -78,12 +79,7 @@ function Connection(){
 					}
 				}
 				break;
-				
-			case("my_id"):
-				myPorfile.id = msg.content;
-				console.log("My ID is: ", myPorfile.id);
-				break;
-				
+								
 			case("disconnected"):				
 				console.log("User "+msg.id+" has disconnected");
 				for(var i = 0; i < room_users_list.length; i++){
@@ -95,7 +91,11 @@ function Connection(){
 				break;
 				
 			case("login"):
-				loginResponse(msg.content);
+				loginResponse(msg.role);
+				if(msg.id > 0){
+					myPorfile.id = msg.id;
+					myPorfile.username = msg.username;
+				}
 				break;
 			
 			case("register"):
@@ -137,6 +137,7 @@ function requestRoom(category){
 	myPorfile.category=category;
 	var msg = {
 			type:"room",
+			id:myPorfile.id,
 			username:myPorfile.username,
 			category:category
 	};				
