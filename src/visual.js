@@ -128,7 +128,7 @@ function loginResponse(pass){
 			document.getElementById('popup-roomMenu').classList.toggle('active');
 			break;
 		 default:
-			console.log("Loged IN FAILED!! response ",pass);				
+			console.log("Loged IN FAILED!! response ",pass);
 
 	}
 }
@@ -189,13 +189,20 @@ unfoldChat_btn.addEventListener("click",function(e){
 	document.getElementById("id_chat_container").classList.toggle("hidden");
 });
 
-var active_box = "login_box";
+var active_box = 'login_box';
 function displayMenu(box){
 	// switch between login & register box
 	if(active_box != box){		
 		document.getElementById(active_box).classList.toggle('selected');
 		document.getElementById(box).classList.toggle('selected');
 		active_box = box;
+		document.getElementById('usernameLogin_txt').value = '';
+		document.getElementById('passwordLogin_txt').value = '';
+		document.getElementById('usernameRegister_txt').value = '';
+		document.getElementById('passwordRegister_txt').value = '';
+
+
+		
 	}	
 }
 

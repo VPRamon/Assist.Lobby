@@ -7,35 +7,38 @@ var mysql = require('mysql');
 var USERS = [];
 var id=0;
 
-var server = http.createServer( function(request, response) {
-    console.log("REQUEST: " + request.url );
-    var url_info = url.parse( request.url, true ); //all the request info is here
-    var pathname = url_info.pathname; //the address
-    var params = url_info.query; //the parameters
-    response.end("OK!"); //send a response
-    if(request.url=="exit")
-        process.exit(0);
-});
-
-server.listen(9022, function() {
-    console.log("Server ready!" );
-});
-
-function user(con,_id,info){
+function user(con){
     this.connection=con;
-    this.id=_id;
-	this.username=info.username;
-    this.posx= info.posx;
-    this.posy= info.posy;
-    this.direction=1;
-    this.dx=0;
-    this.dy=0;
-    this.x_f= info.posx;
-    this.y_f= info.posy;
-	this.maxx= info.maxx;
-	this.maxy= info.maxy;
-	this.skin= info.skin;
-	this.room= info.room;
+    this.id;
+	this.username;
+	this.skin;
+	this.category;
+	this.room;
+	this.ticket;
+}
+
+function waitingRoom(id){
+	this.id = id;
+	this.limit = 10;
+	this.list_of_users;
+	var that = this;
+	this.num_of_users = function(){
+		return that.num_of_users.length;
+	}
+	this.onNewUser = function(user){
+		if(that.num_of_users < 10){
+			that.list_of_users.push(user);
+		}
+		else{
+			console.log("limit exceeded");
+		}
+	}
+	this.onUserLeaves = function(){
+		return that.list_of_users.shift();
+	}
+	this.userTicket = function(){
+		return that.list_of_users[0].ticket;
+	}
 }
 
 function info_to_send(_user){
@@ -230,12 +233,28 @@ function onUserDisconected( connection ){
 	}
 }
 
+
+
+var server = http.createServer( function(request, response) {
+    console.log("REQUEST: " + request.url );
+    var url_info = url.parse( request.url, true ); //all the request info is here
+    var pathname = url_info.pathname; //the address
+    var params = url_info.query; //the parameters
+    response.end("OK!"); //send a response
+    if(request.url=="exit")
+        process.exit(0);
+});
+
+server.listen(9022, function() {
+    console.log("Server ready!" );
+});
+
 wsServer = new WebSocketServer({ httpServer: server });
 
 // Add event handler when one user connects
 wsServer.on('request', function(request) {
     var connection = request.accept(null, request.origin);
-		
+	console.log("new client: ", connection);
     // This is the most important callback for us, we'll handle all messages from users here.
     connection.on('message', function(message) {
 		//console.log(message);

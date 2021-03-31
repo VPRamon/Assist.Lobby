@@ -19,6 +19,14 @@ walk_area.addRect([-1.8,0.1,-0.8],3.6,1.6);
 
 var CHARACTERS_LAYER = 4; //4 is 100 in binary
 
+var room_node_externo = new RD.SceneNode();
+room_node_externo.name = "room";
+room_node_externo.flags.two_sided = true;
+room_node_externo.mesh = "resources/data/room.obj";
+room_node_externo.scale(2);
+room_node_externo.textures.color = "resources/data/fondo_bueno.jpg";
+scene.root.addChild( room_node_externo );
+
 var character = new RD.SceneNode();
 character.name = "girl";
 character.layers = CHARACTERS_LAYER; //layer 0b1 and 0b10 is for objects, layer 0b100 for characters
@@ -29,27 +37,32 @@ character.texture = "resources/data/girl_low.png";
 character.anim_name = "idle";
 scene.root.addChild( character );
 
-var floor_node = new RD.SceneNode();
-floor_node.color = [0.7,0.7,0.7,1];
-floor_node.name = "floor";
-floor_node.mesh = "planeXZ";
-floor_node.scale(10);
-floor_node.textures.color = "resources/data/grid.png";
-//scene.root.addChild( floor_node );
+var table = new RD.SceneNode();
+table.name = "table";
+table.mesh = "resources/data/table_sala/Wood_Table_obj.obj";
+table.texture = "resources/data/table_sala/textures/Wood_Table_C.jpg";
+table.position=[0.03,0,-0.65];
+scene.root.addChild( table );
+
+
+var book = new RD.SceneNode();
+book.name = "book";
+book.mesh = "resources/data/book/1984_book.obj";
+book.texture = "resources/data/book/Texture/1984-book_A.jpg";
+book.scale(0.1);
+book.position=[0.03,0.5,-0.65];
+scene.root.addChild( book );
+
+
 
 var room_node = new RD.SceneNode();
 room_node.name = "room";
 room_node.flags.two_sided = true;
 room_node.mesh = "resources/data/room.obj";
 room_node.textures.color = "resources/data/room.png";
+room_node.position=[0,0.01,0];
 scene.root.addChild( room_node );
 
-//for debugging
-var sphere = new RD.SceneNode();
-sphere.layers = 2;
-sphere.mesh = "sphere";
-sphere.scale(0.05);
-scene.root.addChild( sphere );
 
 //camera
 var camera = new RD.Camera();
@@ -187,7 +200,7 @@ function userMovement( character, dt )
 		delta[2] = 1;
 	else if( gl.keys["S"] )
 		delta[2] = -1;
-	vec3.scale( delta, delta, dt * 5 );
+	vec3.scale( delta, delta, dt );
 	var is_moving = vec3.length(delta);
 	if(is_moving) //if moving
 	{
