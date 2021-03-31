@@ -7,5 +7,5 @@ create table Vinicius_users(
    PRIMARY KEY ( user_id )
 );
 
-INSERT INTO Vinicius_users SET username = 'employee_1', password = 'employee_1', is_employee = true;
-INSERT INTO Vinicius_users SET username = 'employee_2', password = 'employee_2', is_employee = true;
+INSERT INTO Vinicius_users SET username = 'employee_1', password = '58bfce1ddd3b21859b422f5dbd152880', is_employee = true;
+INSERT INTO Vinicius_users SET username = 'employee_2', password = 'bacbdd3f38c1b40071249d69dc693bcd', is_employee = true;
