@@ -23,7 +23,7 @@ var employee = function(con, id, username){
 }
 
 var user = function(con, id, username, skin, category){
-    //this.connection=con;
+    this.connection=con;
     this.id=id;
 	this.username=username;
 	this.skin=skin;
@@ -48,11 +48,21 @@ var waitingRoom = function(id){
 			console.log("limit exceeded");
 		}
 	}
-	this.onUserLeaves = function(){
+	this.onUserQuits = function(user_id){
+		i = that.list_of_users.indexOf(user_id);
+		delete that.list_of_users.splice(i,1);
+	}
+	this.onUserDeparts = function(){
 		return that.list_of_users.shift();
 	}
 	this.userTicket = function(){
 		return that.list_of_users[0].ticket;
+	}
+	this.sendMessage = function(emisor_id, msg){
+		that.list_of_users.forEach( function myFunction(id, index, array) {
+			if(id != emisor_id)
+				DB.onlineClients[id].connection.send(msg);
+		});
 	}
 }
 
@@ -246,10 +256,10 @@ function onUserRegister( connection, info ){
 }
 
 function onEnterRoom(connection, info){
-	//console.log(info.id);
+	//console.log(info.category);
 	//console.log(DB.onlineClients);
-	DB.onlineClients[info.id].category = info.category;
-	DB.add_user_to_wr(info.id, cat_dict[info.category]);
+	DB.onlineClients[connection.id].category = cat_dict[info.category];
+	DB.add_user_to_wr(connection.id, cat_dict[info.category]);
 	
 	/*new_user = new user( connection, id, info);
 	console.log(info);
@@ -290,26 +300,10 @@ function onEnterRoom(connection, info){
 
 // call when we receive a message from a WebSocket
 function onUserMessage( connection, msg ){
-	console.log(connection.id);
-	DB
-	/*var msg_final = JSON.stringify(msg);
-	console.log("Sending Message",msg_final);
-	
-	//for every user connected...
-	var my_user;
-	for(var i = 0; i < USERS.length; i++)
-	{
-		if(USERS[i].connection == connection) 
-			my_user=USERS[i];
-	}
-	
-	for(var i = 0; i < USERS.length; i++)
-	{
-		var user = USERS[i];
-		// avoid feedback
-		if(user.connection != connection  && user.room == my_user.room && (Math.sqrt( Math.pow( Math.abs(my_user.posx - user.posx )  ,2)+  Math.pow( Math.abs(my_user.posy - user.posy )  ,2) ) < 300) ) 
-			user.connection.send( msg_final );
-	}*/
+	sender_id = connection.id;
+	room = DB.onlineClients[sender_id].room;
+	category = DB.onlineClients[sender_id].category;
+	DB.list_of_cat[category][room].sendMessage(sender_id, msg);
 }
 
 // call when we a user updates its position
@@ -332,25 +326,15 @@ function onUserUpdate( connection, msg ){
 // call when we a user disconnects
 function onUserDisconected( connection ){
 	
-	/*var disconnected_user_id;
-	//console.log("User disconnected",USERS); 
-	for(var i = 0; i < USERS.length; i++){		
-		if(USERS[i].connection.state == 'closed'){
-			console.log("goodby ",USERS[i].username); 
-			disconnected_user_id = USERS[i].id;
-			USERS.splice(i,1);
-		}
+	console.log("A user has been disconected");
+	user_id = connection['id'];
+	if(user_id){
+		category = DB.onlineClients[user_id].category;
+		room = DB.onlineClients[user_id].room;
+		DB.list_of_cat[category][room].onUserQuits(user_id);
+		delete DB.onlineClients[user_id];
+		console.log("Goodbye "+user_id);
 	}
-	for(var i = 0; i < USERS.length; i++){			
-		if(USERS[i].room == disconnected_user_id.room){
-			// Inform active users
-			var msg_disconnected = {
-				type: "disconnected",
-				id: disconnected_user_id
-			};
-			USERS[i].connection.send( JSON.stringify(msg_disconnected) );
-		}		
-	}*/
 }
 
 var server = http.createServer( function(request, response) {
@@ -382,7 +366,7 @@ wsServer.on('request', function(request) {
 				case("text"):
 					//console.log("received Message",message);
 					// process WebSocket message				
-					onUserMessage( connection, msg );
+					onUserMessage( connection, message.utf8Data );
 					break;
 					
 				case("login"):
@@ -401,14 +385,15 @@ wsServer.on('request', function(request) {
 				case("update"):
 					onUserUpdate( connection, msg );
 					break;
-					
 			}
         }
     });
 	
-    connection.on('close', function(connection) {
+    connection.on('close', function(e) {
         // close user connection
 		onUserDisconected(connection);
+		
     });
+	
 });
 
