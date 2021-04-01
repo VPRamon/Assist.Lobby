@@ -165,7 +165,7 @@ function onUserLogin( connection, info ){
 	// Check username and password
 	client.query( 'SELECT user_id, is_employee FROM Vinicius_users WHERE username=? AND password=? ',[info.username, enc_password],
 		function selectUsuario(err, results, fields) {
-	 
+	 	user_id = results[0].user_id;
 		if (err) {
 			console.log("Error: " + err.message);
 			throw err;
@@ -180,15 +180,15 @@ function onUserLogin( connection, info ){
 		
 		if(results.length==1){
 			console.log("successful login!");
-			msg.id = results[0].user_id;
+			msg.id = user_id;
 			connection['id'] = results[0].user_id;
-			if(results[0].is_employee){
+			if(results[0].is_employee && !(user_id in DB.onlineEmployees)){
 				msg.role = "employee";
-				DB.onlineEmployees[results[0].user_id] = new employee(connection, results[0].user_id, info.username);
-				DB.new_office(results[0].user_id);				
-			}else{
+				DB.onlineEmployees[user_id] = new employee(connection, user_id, info.username);
+				DB.new_office(user_id);				
+			}else if !(user_id in DB.onlineClients){
 				msg.role = "client";
-				DB.onlineClients[results[0].user_id] = new user(connection, results[0].user_id, info.username);
+				DB.onlineClients[user_id] = new user(connection, user_id, info.username);
 			}
 		}
 		else{
