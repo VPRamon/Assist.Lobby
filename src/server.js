@@ -4,7 +4,8 @@ var url = require('url');
 var crypto = require('crypto');
 var mysql = require('mysql');
 //example of simple users database
-
+var USERS = [];
+var id=0;
 
 var cat_dict = {
 	'Computers':1,
@@ -29,6 +30,55 @@ var user = function(con, id, username, skin, category){
 	this.category=category;
 	this.room;
 	this.ticket;
+	var that = this;
+	this.state = {
+		pos:[0,0,0],
+		fut_pos:[0,0,0],
+		rot:0,
+		fut_rot:0
+	};	
+	this.updatePosition = function(msg, move){
+		if(move){
+			that.state.pos = msg.pos;
+			that.state.fut_pos = msg.fut_pos;
+		}else{
+			that.state.rot += msg.fut_rot;
+		}
+	}
+}
+
+var user_save = function(con, _user){
+    this.connection=con;
+    this.username = _user.username;
+    this.id = _user.id;
+    this.pos = [0,0,0];
+    this.rot = 0;
+	this.fut_rot=0;
+	this.fut_pos=[0,0,0];
+	this.skin= _user.skin;
+	this.room= _user.category;	
+}
+
+/*var info_to_send = function(_user){
+    this.username = _user.username;
+    this.id = _user.id;
+    this.pos = _user.pos;
+    this.rot = _user.rot;
+	this.fut_rot=_user.fut_rot;
+	this.fut_pos=_user.fut_pos;
+	this.skin= _user.skin;
+	this.room= _user.category;
+}*/
+
+var info_to_send = function(_user){
+    this.username = _user.username;
+    this.id = _user.id;
+    this.pos = _user.state.pos;
+    this.rot = _user.state.rot;
+	this.fut_rot=_user.state.fut_rot;
+	this.fut_pos=_user.state.fut_pos;
+	this.skin= _user.skin;
+	//this.room= _user.category;
 }
 
 var waitingRoom = function(id){
@@ -39,9 +89,31 @@ var waitingRoom = function(id){
 	this.len = function(){
 		return that.list_of_users.length;
 	}
-	this.onNewUser = function(user){
-		if(that.len() < 10){
-			that.list_of_users.push(user);
+	this.onNewUser = function(newUser){
+		if(that.len() < that.limit){
+			that.list_of_users.push(newUser);
+			let roommatesInfo=[];
+			that.list_of_users.forEach( function initRoommatesInfo(id, index, array) {
+				//if(id != newUser)					
+				roommatesInfo.push(new info_to_send(DB.onlineClients[id]));
+			});
+			console.log(roommatesInfo);
+			var msg_need_user = {
+				type: "user_list",
+				content:roommatesInfo				
+			};
+			DB.onlineClients[newUser].connection.send( JSON.stringify( msg_need_user ) );
+
+			// Send new user information to active users
+			user_properties = new info_to_send(DB.onlineClients[newUser]);
+			var msg_user_prop = {
+				type: "new_user",
+				content: user_properties
+			};
+			
+			//console.log("sendig user_properties", user_properties);
+			that.sendMessage(newUser, JSON.stringify( msg_user_prop ));
+			
 		}
 		else{
 			console.log("limit exceeded");
@@ -52,6 +124,7 @@ var waitingRoom = function(id){
 		delete that.list_of_users.splice(i,1);
 	}
 	this.onUserDeparts = function(){
+		// to do (let user know)
 		return that.list_of_users.shift();
 	}
 	this.userTicket = function(){
@@ -70,22 +143,28 @@ var office = function(employee_id){
 	this.employee_id = employee_id;
 	this.is_free = true;
 	this.client_id;	
-	var that = this;
-	
-	this.onNewClient = function(client_id){
-		if(that.is_free == true){
-			that.is_free = false;
-			that.client_id = client_id;
-		}
-		else{
-			console.log("Occupied office");
-		}
-	}
-	
+	var that = this;		
 	this.onUserLeaves = function(user){
 		that.client_id = null;
 		that.is_free = true;
 		return 1;
+	}
+	this.onNextClient = function(category){
+		if(that.is_free == true){
+			that.is_free = false;
+			let next_room = 0;
+			let lower_ticket = DB.list_of_cat[category][0].userTicket();
+			for (room = 1; room < DB.list_of_cat[category]; i++){
+				ticket = DB.list_of_cat[category][room].userTicket();
+				if(ticket < lower_ticket){
+					lower_ticket = ticket;
+					next_room = room;
+				}
+			}
+			that.client_id = DB.list_of_cat[category][next_room].onUserDeparts();
+		}else{
+			console.log("Occupied office");
+		}
 	}
 }
 
@@ -137,6 +216,7 @@ var Database = function(){
 			room = that.onlineClients[user_id].room;
 			that.list_of_cat[category][room].onUserQuits(user_id);	// Remove user from room
 			delete that.onlineClients[user_id];						// Remove user from Database
+			// to do (inform clients in room)
 		}else if (user_id in that.onlineEmployees){
 			console.log("Goodbye "+that.onlineEmployees[user_id].username);
 			delete that.availableOffices[user_id];					// Remove office
@@ -263,7 +343,43 @@ function onEnterRoom(connection, info){
 	DB.onlineClients[connection.id].category = cat_dict[info.category]; // Specify category to user
 	DB.onlineClients[connection.id].ticket = DB.lastTicket;				// Specify ticket to user
 	DB.lastTicket += 1;													// increment ticket
+	//RAMON
 	DB.add_user_to_wr(connection.id, cat_dict[info.category]);			// Put user in room
+	
+	
+	
+	
+	//DAVID (Implementat en waiting room onNewUser
+	/*let client = new user(connection, info.id, info.username, info.skin, info.category)
+	USERS.push( new user_save(connection,client) );
+	
+	// Send active users information to new user
+	lista_aux=[];
+	for(var i = 0; i < USERS.length; i++){
+		//if(USERS[i].connection != connection && USERS[i].room == info.room) 
+			lista_aux.push(new info_to_send(USERS[i]));
+	}	
+	console.log(lista_aux);
+	var msg_need_user = {
+		type: "user_list",
+		content:lista_aux				
+	};
+	connection.send( JSON.stringify( msg_need_user ) );
+	
+	// Send new user information to active users
+	user_properties = new info_to_send(new user_save(connection,client));
+	var msg_user_prop = {
+		type: "new_user",
+		content: user_properties
+	};
+	
+	var user_properties_str = JSON.stringify( msg_user_prop );	
+	//console.log("sendig user_properties", user_properties);
+	for(var i = 0; i < USERS.length; i++){
+		//if(USERS[i].connection != connection && USERS[i].room == info.room) 
+		if(USERS[i].connection != connection ) 
+			USERS[i].connection.send(user_properties_str);
+	}*/
 }
 
 // call when we receive a message from a WebSocket
@@ -275,20 +391,12 @@ function onUserMessage( connection, msg ){
 }
 
 // call when we a user updates its position
-function onUserUpdate( connection, msg ){
-	
-	for(var i = 0; i < USERS.length; i++){		
-		if(USERS[i].connection == connection){
-			USERS[i].posx = msg.x_f;
-			USERS[i].posy = msg.y_f;
-			USERS[i].direction = msg.direction;			
-		}
-		else{			
-			// Inform active users
-			if(USERS[i].room == msg.room)
-				USERS[i].connection.send( JSON.stringify(msg) );
-		}
-	}
+function onUserUpdate( connection, msg ,move){
+	user_id = connection.id;
+	user_category = DB.onlineClients[user_id].category;
+	user_room = DB.onlineClients[user_id].room;
+	DB.list_of_cat[user_category][user_room].sendMessage(user_id, JSON.stringify(msg));		// Inform active users in same room	
+	DB.onlineClients[user_id].updatePosition(msg, move);									// Update sender position
 }
 
 // call when we a user disconnects
@@ -344,6 +452,12 @@ wsServer.on('request', function(request) {
 					
 				case("update"):
 					onUserUpdate( connection, msg );
+					break;
+				case("move"):
+					onUserUpdate( connection, msg,true );
+					break;
+				case("rotation"):
+					onUserUpdate( connection, msg,false );
 					break;
 			}
         }

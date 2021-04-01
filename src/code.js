@@ -11,57 +11,7 @@ gl.captureKeys();
 gl.onmouse = onMouse;
 gl.onkeydown = onKey;
 
-//scene container
-var scene = new RD.Scene();
 
-var walk_area = new WalkArea();
-walk_area.addRect([-1.8,0.1,-0.8],3.6,1.6);
-
-var CHARACTERS_LAYER = 4; //4 is 100 in binary
-
-var room_node_externo = new RD.SceneNode();
-room_node_externo.name = "room";
-room_node_externo.flags.two_sided = true;
-room_node_externo.mesh = "resources/data/room.obj";
-room_node_externo.scale(2);
-room_node_externo.textures.color = "resources/data/fondo_bueno.jpg";
-scene.root.addChild( room_node_externo );
-
-var character = new RD.SceneNode();
-character.name = "girl";
-character.layers = CHARACTERS_LAYER; //layer 0b1 and 0b10 is for objects, layer 0b100 for characters
-character.is_character = true; //in case we want to know if an scene node is a character
-character.scale(0.01);
-character.mesh = "resources/data/girl.wbin";
-character.texture = "resources/data/girl_low.png";
-character.anim_name = "idle";
-scene.root.addChild( character );
-
-var table = new RD.SceneNode();
-table.name = "table";
-table.mesh = "resources/data/table_sala/Wood_Table_obj.obj";
-table.texture = "resources/data/table_sala/textures/Wood_Table_C.jpg";
-table.position=[0.03,0,-0.65];
-scene.root.addChild( table );
-
-
-var book = new RD.SceneNode();
-book.name = "book";
-book.mesh = "resources/data/book/1984_book.obj";
-book.texture = "resources/data/book/Texture/1984-book_A.jpg";
-book.scale(0.1);
-book.position=[0.03,0.5,-0.65];
-scene.root.addChild( book );
-
-
-
-var room_node = new RD.SceneNode();
-room_node.name = "room";
-room_node.flags.two_sided = true;
-room_node.mesh = "resources/data/room.obj";
-room_node.textures.color = "resources/data/room.png";
-room_node.position=[0,0.01,0];
-scene.root.addChild( room_node );
 
 
 //camera
@@ -130,93 +80,176 @@ function drawWorld( camera )
 	}
 	*/
 }
-
+var i_aux=0;
 //CONTROLLER
 function update(dt)
 {
 	var t = getTime() * 0.001;
-
+	
+	for(var i = 0; i < room_users_list.length; i++){
+		
+		if(room_users_list[i].id==myPorfile.id){
+			i_aux=i;	
+		}
+		else{
+			var is_moving = vec3.length(room_users_list[i].fut_pos);
+			var anim1 = animations[ characters_list[i].anim_name ];
+			if(anim1 && anim1.duration)
+			{
+				anim1.assignTime( t, true );
+				characters_list[i].assignSkeleton( anim1.skeleton );
+				characters_list[i].shader = "texture_skinning";
+				characters_list[i].skeleton = anim1.skeleton; //this could be useful
+			}
+			//move de cada character
+			if(is_moving && room_users_list[i].id!=myPorfile.id ){
+				
+				
+				//vec3.scale( room_users_list[i].fut_pos, room_users_list[i].fut_pos, dt );
+				
+				characters_list[i].moveLocal( room_users_list[i].fut_pos );
+				characters_list[i].anim_name = "walking";
+				characters_list[i].dance = false;
+				characters_list[i].position = walk_area.adjustPosition( characters_list[i].position );
+				room_users_list[i].fut_pos=[0,0,0];
+				
+			}
+			else if(room_users_list[i].id!=myPorfile.id && is_moving==false){
+				characters_list[i].anim_name = characters_list[i].dance ? "dancing" : "idle";
+				//console.log("quieto");
+			}
+			
+			//rotation de cada character
+			if(room_users_list[i].fut_rot!=room_users_list[i].rot){
+				characters_list[i].rotate(dt*room_users_list[i].fut_rot,[0,1,0]);
+				room_users_list[i].fut_rot=0;
+				
+			}
+			
+			
+		}
+		
+			
+	}
 	//example of how to blend two animations
 	//animations.idle.assignTime( t, true );
 	//animations.walking.assignTime( t, true );
 	//RD.Skeleton.blend( animations.idle, animations.walking, 0.5, skeleton );
+	if(characters_list.length>0){
+		var anim = animations[ characters_list[i_aux].anim_name ];
+		if(anim && anim.duration)
+		{
+			anim.assignTime( t, true );
+			characters_list[i_aux].assignSkeleton( anim.skeleton );
+			characters_list[i_aux].shader = "texture_skinning";
+			characters_list[i_aux].skeleton = anim.skeleton; //this could be useful
+		}
 
-	var anim = animations[ character.anim_name ];
-	if(anim && anim.duration)
-	{
-		anim.assignTime( t, true );
-		character.assignSkeleton( anim.skeleton );
-		character.shader = "texture_skinning";
-		character.skeleton = anim.skeleton; //this could be useful
-	}
+		//input
+		if(freecam)
+		{
+			//free camera
+			var delta = [0,0,0];
+			if( gl.keys["W"] )
+				delta[2] = -1;
+			else if( gl.keys["S"] )
+				delta[2] = 1;
+			if( gl.keys["A"] )
+				delta[0] = -1;
+			else if( gl.keys["D"] )
+				delta[0] = 1;
+			camera.moveLocal(delta,dt * 10);
+		}
+		else
+			userMovement( characters_list[i_aux], dt );
 
-	//input
-	if(freecam)
-	{
-		//free camera
-		var delta = [0,0,0];
-		if( gl.keys["W"] )
-			delta[2] = -1;
-		else if( gl.keys["S"] )
-			delta[2] = 1;
-		if( gl.keys["A"] )
-			delta[0] = -1;
-		else if( gl.keys["D"] )
-			delta[0] = 1;
-		camera.moveLocal(delta,dt * 10);
-	}
-	else
-		userMovement( character, dt );
+		//example of ray test from the character with the environment (layer 0b1)
+		if(0)
+		{
+			var center = characters_list[i_aux].localToGlobal([0,70,0]);
+			var forward = characters_list[i_aux].getLocalVector([0,0,1]);
+			vec3.normalize( forward, forward );
+			var ray = new GL.Ray(center,forward);
+			var coll_node = scene.testRay( ray,null,100,1 );
+			if(coll_node)
+				sphere.position = ray.collision_point;
+		}
 
-	//example of ray test from the character with the environment (layer 0b1)
-	if(0)
-	{
-		var center = character.localToGlobal([0,70,0]);
-		var forward = character.getLocalVector([0,0,1]);
-		vec3.normalize( forward, forward );
-		var ray = new GL.Ray(center,forward);
-		var coll_node = scene.testRay( ray,null,100,1 );
-		if(coll_node)
-			sphere.position = ray.collision_point;
+		//example of placing object in head of character
+		if(0 && characters_list[i_aux].skeleton)
+		{
+			var head_matrix = characters_list[i_aux].skeleton.getBoneMatrix("mixamorig_Head", true);
+			var gm = characters_list[i_aux].getGlobalMatrix();
+			var m = mat4.create();
+			mat4.multiply( m, gm, head_matrix );
+			mat4.scale( m, m, [20,20,20]);
+			sphere.fromMatrix( m );
+		}
+			
 	}
-
-	//example of placing object in head of character
-	if(0 && character.skeleton)
-	{
-		var head_matrix = character.skeleton.getBoneMatrix("mixamorig_Head", true);
-		var gm = character.getGlobalMatrix();
-		var m = mat4.create();
-		mat4.multiply( m, gm, head_matrix );
-		mat4.scale( m, m, [20,20,20]);
-		sphere.fromMatrix( m );
-	}
+	
 
 }
 
 function userMovement( character, dt )
 {
+	
 	var delta = [0,0,0];
 	if( gl.keys["W"] )
 		delta[2] = 1;
 	else if( gl.keys["S"] )
 		delta[2] = -1;
+	var delta_aux=delta;
 	vec3.scale( delta, delta, dt );
 	var is_moving = vec3.length(delta);
 	if(is_moving) //if moving
 	{
+		console.log(i_aux);
 		character.moveLocal( delta );
 		character.anim_name = "walking";
 		character.dance = false;
+		
+		
 	}
 	else
 		character.anim_name = character.dance ? "dancing" : "idle";
-
-	if( gl.keys["A"] )
+	
+	var rotacion=false;
+	var angle=0;
+	if( gl.keys["A"] ){
 		character.rotate(dt*1.5,[0,1,0]);
-	else if( gl.keys["D"] )
+		angle=1.5;
+		rotacion=true;
+	}
+	else if( gl.keys["D"] ){
 		character.rotate(dt*-1.5,[0,1,0]);
+		angle=-1.5;
+		rotacion=true;
+	}
+		
 
 	character.position = walk_area.adjustPosition( character.position );
+	if(is_moving){
+		var msg = {
+			type: "move",
+			id:myPorfile.id ,
+			pos:character.position,
+			fut_pos:delta
+		};
+
+		socket.socket.send(JSON.stringify( msg ));
+	}
+	else if(rotacion){
+		var msg = {
+			type: "rotation",
+			id:myPorfile.id ,
+			fut_rot:angle
+		};
+
+		socket.socket.send(JSON.stringify( msg ));
+	}
+	
+	
 }
 
 function onMouse(e)
@@ -261,7 +294,7 @@ function onKey(e)
 		return true;
 	}
 	else if(e.code == "Space")
-		character.dance = !character.dance;
+		characters_list[i_aux].dance = !characters_list[i_aux].dance;
 }
 
 
