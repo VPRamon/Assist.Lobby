@@ -4,8 +4,7 @@ var url = require('url');
 var crypto = require('crypto');
 var mysql = require('mysql');
 //example of simple users database
-var USERS = [];
-var id=0;
+
 
 var cat_dict = {
 	'Computers':1,
@@ -66,29 +65,27 @@ var waitingRoom = function(id){
 	}
 }
 
-var office = function(employee){
-	this.id; // to do
-	this.employee = employee;
+var office = function(employee_id){
+	this.id = employee_id;
+	this.employee_id = employee_id;
 	this.is_free = true;
-	this.client;	
+	this.client_id;	
 	var that = this;
-	this.onNewClient = function(user){
+	
+	this.onNewClient = function(client_id){
 		if(that.is_free == true){
 			that.is_free = false;
-			that.client = user;
+			that.client_id = client_id;
 		}
 		else{
 			console.log("Occupied office");
 		}
 	}
+	
 	this.onUserLeaves = function(user){
-		that.client = null;
+		that.client_id = null;
 		that.is_free = true;
 		return 1;
-	}
-	this.userTicket = function(){
-		if(that.client)
-			return that.client.ticket;
 	}
 }
 
@@ -96,16 +93,18 @@ var Database = function(){
 
 	var that = this;
 	this.onlineClients = {}
+	this.onlineEmployees = {}
 	this.list_of_cat = [];
-	this.list_of_offices = [];
+	this.availableOffices = {};
+	this.lastTicket = 1;
 	
 	this.new_wr = function(category){
 		let id = that.list_of_cat[category].length;
 		that.list_of_cat[category].push(new waitingRoom(id));
 	}
 	
-	this.new_office = function(employee){
-		that.list_of_offices.push(new office(employee));
+	this.new_office = function(employee_id){
+		that.availableOffices[employee_id] = new office(employee_id);
 	}
 	
 	this.init = function(num_of_categories){
@@ -114,7 +113,7 @@ var Database = function(){
 			that.list_of_cat.push([new waitingRoom(0)]); 
 	}
 	
-	this.add_user_to_wr = function(user_id, category){		
+	this.add_user_to_wr = function(user_id, category){
 		let room=0;
 		for (room = 0; room < that.list_of_cat[category].length; room++) { 
 			// if room is not full -> add user
@@ -130,26 +129,27 @@ var Database = function(){
 		DB.onlineClients[user_id].room = room;
 		return room;
 	}
+
+	this.onUserDisconnected = function(user_id){
+		if(user_id in that.onlineClients){
+			console.log("Goodbye "+that.onlineClients[user_id].username);
+			category = that.onlineClients[user_id].category;
+			room = that.onlineClients[user_id].room;
+			that.list_of_cat[category][room].onUserQuits(user_id);	// Remove user from room
+			delete that.onlineClients[user_id];						// Remove user from Database
+		}else if (user_id in that.onlineEmployees){
+			console.log("Goodbye "+that.onlineEmployees[user_id].username);
+			delete that.availableOffices[user_id];					// Remove office
+			delete that.onlineEmployees[user_id];						// Remove user from Database
+		}else{
+			// to do (handle error user not found on disconected)
+		}
+	}
+	
 }
 
 var DB = new Database();
 DB.init(Object.keys(cat_dict).length);
-
-function info_to_send(_user){
-    this.username = _user.username;
-    this.id = _user.id;
-    this.posx = _user.posx;
-    this.posy = _user.posy;
-    this.direction = _user.direction;
-    this.dx=_user.dx;
-    this.dy=_user.dy;
-    this.x_f= _user.x_f;
-    this.y_f=_user.y_f;
-	this.maxx=_user.maxx;
-	this.maxy=_user.maxy;
-	this.skin= _user.skin;
-	this.room= _user.room;	
-}
 
 function onUserLogin( connection, info ){
 	console.log("new login attempt.");
@@ -182,13 +182,13 @@ function onUserLogin( connection, info ){
 			console.log("successful login!");
 			msg.id = results[0].user_id;
 			connection['id'] = results[0].user_id;
-			if(results[0].is_employee==1){
+			if(results[0].is_employee){
 				msg.role = "employee";
-				DB.new_office( new employee(connection, results[0].user_id, info.username) );
-				
-			}else if(results[0].is_employee==0){
-				DB.onlineClients[results[0].user_id] = new user(connection, results[0].user_id, info.username);
+				DB.onlineEmployees[results[0].user_id] = new employee(connection, results[0].user_id, info.username);
+				DB.new_office(results[0].user_id);				
+			}else{
 				msg.role = "client";
+				DB.onlineClients[results[0].user_id] = new user(connection, results[0].user_id, info.username);
 			}
 		}
 		else{
@@ -256,46 +256,10 @@ function onUserRegister( connection, info ){
 }
 
 function onEnterRoom(connection, info){
-	//console.log(info.category);
-	//console.log(DB.onlineClients);
-	DB.onlineClients[connection.id].category = cat_dict[info.category];
-	DB.add_user_to_wr(connection.id, cat_dict[info.category]);
-	
-	/*new_user = new user( connection, id, info);
-	console.log(info);
-	var msg_id = {
-		type: "my_id",
-		content: id			
-	};
-	connection.send(JSON.stringify(msg_id));
-	id=id+1;
-	USERS.push( new_user );
-	
-	// Send active users information to new user
-	lista_aux=[];
-	for(var i = 0; i < USERS.length; i++){
-		if(USERS[i].connection != connection && USERS[i].room == info.room) 
-			lista_aux.push(new info_to_send(USERS[i]));
-	}	
-	var msg_need_user = {
-		type: "user_list",
-		content:lista_aux				
-	};
-	connection.send( JSON.stringify( msg_need_user ) );
-	
-	// Send new user information to active users
-	user_properties = new info_to_send(new_user);
-	var msg_user_prop = {
-		type: "new_user",
-		content: user_properties
-	};
-	
-	var user_properties_str = JSON.stringify( msg_user_prop );	
-	//console.log("sendig user_properties", user_properties);
-	for(var i = 0; i < USERS.length; i++){
-		if(USERS[i].connection != connection && USERS[i].room == info.room) 
-			USERS[i].connection.send(user_properties_str);
-	}*/
+	DB.onlineClients[connection.id].category = cat_dict[info.category]; // Specify category to user
+	DB.onlineClients[connection.id].ticket = DB.lastTicket;				// Specify ticket to user
+	DB.lastTicket += 1;													// increment ticket
+	DB.add_user_to_wr(connection.id, cat_dict[info.category]);			// Put user in room
 }
 
 // call when we receive a message from a WebSocket
@@ -324,17 +288,12 @@ function onUserUpdate( connection, msg ){
 }
 
 // call when we a user disconnects
-function onUserDisconected( connection ){
-	
+function onUserDisconected( connection ){	
 	console.log("A user has been disconected");
 	user_id = connection['id'];
-	if(user_id){
-		category = DB.onlineClients[user_id].category;
-		room = DB.onlineClients[user_id].room;
-		DB.list_of_cat[category][room].onUserQuits(user_id);
-		delete DB.onlineClients[user_id];
-		console.log("Goodbye "+user_id);
-	}
+	if(user_id)
+		DB.onUserDisconnected(user_id);
+	
 }
 
 var server = http.createServer( function(request, response) {
@@ -357,15 +316,12 @@ wsServer = new WebSocketServer({ httpServer: server });
 wsServer.on('request', function(request) {
     var connection = request.accept(null, request.origin);
 	
-    // This is the most important callback for us, we'll handle all messages from users here.
     connection.on('message', function(message) {
         if (message.type === 'utf8') {		
 			
 			var msg = JSON.parse( message.utf8Data );	
 			switch(msg.type){			
-				case("text"):
-					//console.log("received Message",message);
-					// process WebSocket message				
+				case("text"):		
 					onUserMessage( connection, message.utf8Data );
 					break;
 					
@@ -390,7 +346,7 @@ wsServer.on('request', function(request) {
     });
 	
     connection.on('close', function(e) {
-        // close user connection
+        // close user connection and clear user data
 		onUserDisconected(connection);
 		
     });
