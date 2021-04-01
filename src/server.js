@@ -179,16 +179,20 @@ function onUserLogin( connection, info ){
 		};
 		
 		if(results.length==1){
-			console.log("successful login!");
-			msg.id = user_id;
-			connection['id'] = results[0].user_id;
-			if(results[0].is_employee && !(user_id in DB.onlineEmployees)){
-				msg.role = "employee";
-				DB.onlineEmployees[user_id] = new employee(connection, user_id, info.username);
-				DB.new_office(user_id);				
-			}else if !(user_id in DB.onlineClients){
-				msg.role = "client";
-				DB.onlineClients[user_id] = new user(connection, user_id, info.username);
+			if( (user_id in DB.onlineEmployees) || (user_id in DB.onlineClients) ){
+			   console.log("User already logged");
+			}else{
+				console.log("successful login!");
+				msg.id = user_id;
+				connection['id'] = results[0].user_id;
+				if(results[0].is_employee){
+					msg.role = "employee";
+					DB.onlineEmployees[user_id] = new employee(connection, user_id, info.username);
+					DB.new_office(user_id);				
+				}else{
+					msg.role = "client";
+					DB.onlineClients[user_id] = new user(connection, user_id, info.username);
+				}
 			}
 		}
 		else{
