@@ -157,15 +157,23 @@ var office = function(employee_id){
 	this.employee_id = employee_id;
 	this.is_free = true;
 	this.client_id;	
-	var that = this;		
-	this.onUserLeaves = function(user){
+	var that = this;
+	
+	this.onUserLeaves = function(){
+		//console.log("sending disconected");
+		let msg = {
+			type: "disconnected",
+			id: that.client_id
+		};
+		DB.onlineEmployees[that.employee_id].connection.send(JSON.stringify(msg));
 		that.client_id = null;
 		that.is_free = true;
 		return 1;
 	}
+	
 	this.onNextClient = function(category){
-		console.log("WR: ",DB.list_of_cat[category]);
-		console.log("len: ",DB.list_of_cat[category][0].len());
+		//console.log("WR: ",DB.list_of_cat[category]);
+		//console.log("len: ",DB.list_of_cat[category][0].len());
 		if(that.is_free == true && DB.list_of_cat[category][0].len() > 0){	// to do (chech if ANY client in waiting rooms, ont just i first)
 			that.is_free = false;		// Set office as occupied
 			let next_room = 0;			// Search next client
@@ -196,13 +204,16 @@ var office = function(employee_id){
 			console.log("Occupied office");
 		}
 	}
+	
 	this.sendMessage = function(emisor_id, msg){
-		if(emisor_id in DB.onlineEmployees)
-			DB.onlineClients[that.client_id].connection.send(msg);
-		else if (emisor_id in DB.onlineClients)
-			DB.onlineEmployees[that.employee_id].connection.send(msg);
-		else
-			console.log("unkown sender!");
+		if(!that.is_free){
+			if(emisor_id in DB.onlineEmployees)
+				DB.onlineClients[that.client_id].connection.send(msg);
+			else if (emisor_id in DB.onlineClients)
+				DB.onlineEmployees[that.employee_id].connection.send(msg);
+			else
+				console.log("unkown sender!");
+		}
 	}
 }
 
@@ -252,8 +263,11 @@ var Database = function(){
 			console.log("Goodbye "+that.onlineClients[user_id].username);
 			category = that.onlineClients[user_id].category;
 			room = that.onlineClients[user_id].room;
-			that.list_of_cat[category][room].onUserQuits(user_id);	// Remove user from room
-			delete that.onlineClients[user_id];						// Remove user from Database
+			if(that.onlineClients[user_id].inOffice)
+				that.availableOffices[room].onUserLeaves();
+			else
+				that.list_of_cat[category][room].onUserQuits(user_id);	// Remove user from room
+			delete that.onlineClients[user_id];							// Remove user from Database
 			// to do (inform clients in room)
 		}else if (user_id in that.onlineEmployees){
 			console.log("Goodbye "+that.onlineEmployees[user_id].username);

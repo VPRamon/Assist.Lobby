@@ -87,14 +87,6 @@ function Connection(){
 					character.scale(0.01);
 					character.position=room_users_list[i].pos;
 					character.rotation=room_users_list[i].rot;
-					//character.rotate(room_users_list[i].fut_rot_aux,[0,1,0]);
-					/*if(room_users_list.fut_rot_aux==0){
-						character.rotate(room_users_list[i].fut_rot_aux,[0,1,0]);
-					}
-					else{
-						character.rotation=room_users_list[i].rot;
-					}*/
-					
 					character.mesh = "resources/data/girl.wbin";
 					character.texture = "resources/data/girl_low.png";
 					character.anim_name = "idle";
@@ -131,11 +123,6 @@ function Connection(){
 						room_users_list[i].pos = msg.pos;
 						room_users_list[i].fut_pos = msg.fut_pos;
 						room_users_list[i].dt = msg.dt;
-						
-						//room_users_list[i].rot = msg.angle;
-						//room_users_list[i].dx = msg.dx;//room_users_list[i].x_f - room_users_list[i].x_0; 
-						//room_users_list[i].dy = msg.dy;//room_users_list[i].y_f - room_users_list[i].y_0;						
-							
 					}
 				}
 				break;
@@ -148,10 +135,6 @@ function Connection(){
 						room_users_list[i].fut_rot_aux=msg.angle;
 						room_users_list[i].fut_rot = msg.fut_rot;
 						room_users_list[i].dt = msg.dt;
-						//room_users_list[i].rot = msg.angle;
-						//room_users_list[i].dx = msg.dx;//room_users_list[i].x_f - room_users_list[i].x_0; 
-						//room_users_list[i].dy = msg.dy;//room_users_list[i].y_f - room_users_list[i].y_0;						
-							
 					}
 				}
 				break;
@@ -172,19 +155,15 @@ function Connection(){
 				break;
 				
 			case("office"):
-				console.log("preparing office");
-				//console.log(msg.content);
-				//console.log(room_users_list);				
-				//if(room_users_list.length>1){					
-					for(var i = 1; i < room_users_list.length; i++){
-						if(room_users_list[i].id!=msg.id){
-							room_users_list.splice(i,1);
-							characters_list.splice(i,1);
-							var node_to_delete=scene.root.getAllChildren();
-							scene.root.removeChild(node_to_delete[i+4]);
-						}
+				console.log("preparing office");				
+				for(var i = 1; i < room_users_list.length; i++){
+					if(room_users_list[i].id!=msg.id){
+						room_users_list.splice(i,1);
+						characters_list.splice(i,1);
+						var node_to_delete=scene.root.getAllChildren();
+						scene.root.removeChild(node_to_delete[i+4]);
 					}
-				//}
+				}
 				
 				console.log(msg.content);
 				room_users_list.push(msg.content);
