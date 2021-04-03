@@ -22,7 +22,7 @@ var employee = function(con, id, username){
 	this.state = {
 		pos:[0,0,0],
 		fut_pos:[0,0,0],
-		rot:0,
+		rot:[0,0,0,1],
 		fut_rot:0,
 		dt:1,
 		fut_rot_aux:0
@@ -389,7 +389,6 @@ function onEnterRoom(connection, info){
 	DB.onlineClients[connection.id].category = cat_dict[info.category]; // Specify category to user
 	DB.onlineClients[connection.id].ticket = DB.lastTicket;				// Specify ticket to user
 	DB.lastTicket += 1;													// increment ticket
-	//RAMON
 	DB.add_user_to_wr(connection.id, cat_dict[info.category]);			// Put user in room
 }
 

@@ -170,11 +170,11 @@ function Connection(){
 				}
 				console.log(scene.root);
 				break;
+				
 			case("office"):
 				console.log("preparing office");
 				//console.log(msg.content);
-				//console.log(room_users_list);
-				
+				//console.log(room_users_list);				
 				//if(room_users_list.length>1){					
 					for(var i = 1; i < room_users_list.length; i++){
 						if(room_users_list[i].id!=msg.id){
@@ -194,7 +194,7 @@ function Connection(){
 				character.is_character = true; //in case we want to know if an scene node is a character
 				character.scale(0.01);
 				character.position=msg.content.pos;
-				character.rotate(msg.content.rot,[0,1,0]);
+				character.rotation=msg.content.rot;
 				character.mesh = "resources/data/girl.wbin";
 				character.texture = "resources/data/girl_low.png";
 				character.anim_name = "idle";
