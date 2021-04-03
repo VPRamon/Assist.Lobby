@@ -77,7 +77,6 @@ var info_to_send = function(_user){
 	this.fut_pos=_user.state.fut_pos;
 	this.skin= _user.skin;
 	this.dt=_user.state.dt;
-	//this.room= _user.category;
 }
 
 var waitingRoom = function(id){
@@ -328,7 +327,7 @@ function onUserLogin( connection, info ){
 						
 					};
 					connection.send(JSON.stringify(msg2));
-					DB.availableOffices[user_id].onNextClient(1);	// to do (employee iteraction with nextClient method)
+					//DB.availableOffices[user_id].onNextClient(1);	// to do (employee iteraction with nextClient method)
 				}else{
 					msg.role = "client";
 					DB.onlineClients[user_id] = new user(connection, user_id, info.username);
@@ -409,9 +408,27 @@ function onEnterRoom(connection, info){
 // call when we receive a message from a WebSocket
 function onUserMessage( connection, msg ){
 	sender_id = connection.id;
-	room = DB.onlineClients[sender_id].room;
-	category = DB.onlineClients[sender_id].category;
-	DB.list_of_cat[category][room].sendMessage(sender_id, msg);
+	
+	if(sender_id in DB.onlineClients){
+		room = DB.onlineClients[sender_id].room;
+		category = DB.onlineClients[sender_id].category;
+		if(DB.onlineClients[sender_id].inOffice)
+			DB.availableOffices[room].sendMessage(sender_id, msg);
+		else
+			DB.list_of_cat[category][room].sendMessage(sender_id, msg);
+
+	}else if(sender_id in DB.onlineEmployees){
+		room = DB.onlineEmployees[sender_id].room;
+		DB.availableOffices[room].sendMessage(sender_id, msg);
+
+	}else
+		console.log("unkown sender");
+}
+
+function onNextClient(connection, msg){
+	let employee_id = connection.id;
+	let category = cat_dict[msg.category];
+	DB.availableOffices[employee_id].onNextClient(category);	// to do (employee iteraction with nextClient method)
 }
 
 // call when we a user updates its position
@@ -422,8 +439,6 @@ function onUserUpdate( connection, msg ,move){
 		user_room = DB.onlineClients[user_id].room;
 		DB.onlineClients[user_id].updatePosition(msg, move);									// Update sender position
 
-		console.log("offices: ", DB.availableOffices);
-		console.log("selected_room", user_room);
 		if(DB.onlineClients[user_id].inOffice)
 			DB.availableOffices[user_room].sendMessage(user_id, JSON.stringify(msg));			// Inform active users in same room
 		else
@@ -490,11 +505,17 @@ wsServer.on('request', function(request) {
 				case("update"):
 					onUserUpdate( connection, msg );
 					break;
+					
 				case("move"):
 					onUserUpdate( connection, msg,true );
 					break;
+					
 				case("rotation"):
 					onUserUpdate( connection, msg,false );
+					break;
+					
+				case("nextClient"):
+					onNextClient( connection, msg);
 					break;
 			}
         }

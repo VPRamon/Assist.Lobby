@@ -11,6 +11,8 @@ var myPorfile ={
 function loginResponse(){};
 function registerResponse(){};
 function showMessage(txt){};
+function clearChat(){};
+function changeTitle(employee_username){};
 
 
 //scene container
@@ -77,8 +79,8 @@ function Connection(){
 				
 			case("user_list"):
 				room_users_list=msg.content;
-				console.log("estamos");
-				console.log(room_users_list);
+				//console.log("estamos");
+				//console.log(room_users_list);
 				for (var i=0; i<room_users_list.length;i++){
 					var character = new RD.SceneNode();
 					character.name = room_users_list[i].id;
@@ -92,7 +94,7 @@ function Connection(){
 					character.anim_name = "idle";
 					scene.root.addChild( character );
 					characters_list.push(character);
-					console.log(character.rotation);
+					//console.log(character.rotation);
 				}
 				
 				break;
@@ -155,7 +157,11 @@ function Connection(){
 				break;
 				
 			case("office"):
-				console.log("preparing office");				
+				console.log("preparing office");
+				clearChat();
+				changeTitle( msg.content.username);
+
+				// to do msg.id = idefied
 				for(var i = 1; i < room_users_list.length; i++){
 					if(room_users_list[i].id!=msg.id){
 						room_users_list.splice(i,1);
@@ -165,7 +171,7 @@ function Connection(){
 					}
 				}
 				
-				console.log(msg.content);
+				//console.log(msg.content);
 				room_users_list.push(msg.content);
 				var character = new RD.SceneNode();
 				character.name = msg.content.id;
@@ -238,6 +244,14 @@ function requestRoom(category){
 			category:category
 	};				
 	socket.socket.send(JSON.stringify(msg));
+}
+
+function nextClient(category){
+	var msg = {
+		type: "nextClient",
+		category:category
+	};
+	socket.socket.send(JSON.stringify( msg ));
 }
 
 function sendMessage(txt){

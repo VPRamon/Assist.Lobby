@@ -5,7 +5,8 @@ var login_btn= document.querySelector("#login_btn");
 var register_btn= document.querySelector("#register_btn");
 var enterRoom_btn= document.querySelector("#enterRoom_btn");
 var unfoldChat_btn= document.querySelector("#imageChat");
-
+var nextClient_btn= document.querySelector("#imageNext");
+var close_btn= document.querySelector("#imageClose");
 
 var canvas = document.querySelector("#canvas");
 //var ctx = canvas.getContext('2d');
@@ -126,6 +127,7 @@ function loginResponse(pass){
 			console.log("Loged In as employee!!");
 			document.getElementById("popup-loginMenu").classList.toggle("active");	
 			document.getElementById('content').classList.toggle('hidden');
+			document.getElementById('imageNext').classList.toggle('hidden');
 			init()
 			break;
 		 default:
@@ -145,6 +147,19 @@ function registerResponse(pass){
 		console.log("Register IN FAILED!!");
 		//try again
 	}
+}
+
+function clearChat(){
+	let msgs_container = document.getElementById("id_messages_container");
+	while (msgs_container.firstChild) {
+		msgs_container.removeChild(msgs_container.lastChild);
+	  }
+}
+
+function changeTitle(employee_username){
+	document.getElementById("canvasTitle").innerHTML = "Office";
+	document.getElementById("chat_title").innerHTML = employee_username;
+		
 }
 
 send_btn.addEventListener("click",function(e){	
@@ -190,6 +205,17 @@ unfoldChat_btn.addEventListener("click",function(e){
 	document.getElementById("id_chat_container").classList.toggle("hidden");
 });
 
+nextClient_btn.addEventListener("click",function(e){
+	console.log("requesting next");
+	nextClient('Computers');
+});
+
+close_btn.addEventListener("click",function(e){
+	location.reload();
+});
+
+
+
 var active_box = 'login_box';
 function displayMenu(box){
 	// switch between login & register box
@@ -217,4 +243,10 @@ function setChatPosition(){
 	document.getElementById("id_chat_container").style.top = canvas_y_coord + 55;
 	document.getElementById("id_chat_container").style.right = canvas_x_coord + 55;
 
+	document.getElementById("imageNext").style.bottom = 10;
+	document.getElementById("imageNext").style.right = canvas_x_coord + 10;
+	
+	document.getElementById("imageClose").style.top = canvas_y_coord + 5;
+	document.getElementById("imageClose").style.left = canvas_x_coord + 5;
 }
+

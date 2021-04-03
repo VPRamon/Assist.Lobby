@@ -209,7 +209,7 @@ function userMovement( character, dt )
 	var is_moving = vec3.length(delta);
 	if(is_moving) //if moving
 	{
-		console.log(i_aux);
+		//console.log(i_aux);
 		character.moveLocal( delta );
 		character.anim_name = "walking";
 		character.dance = false;
@@ -247,8 +247,6 @@ function userMovement( character, dt )
 		socket.socket.send(JSON.stringify( msg ));
 	}
 	if(rotacion){
-		console.log("rotation");
-		console.log(character.rotation);
 		var msg = {
 			type: "rotation",
 			id:myPorfile.id ,
@@ -273,7 +271,7 @@ function onMouse(e)
 		var coll_node = scene.testRay(ray);
 		if(coll_node)
 		{
-			console.log(coll_node.name, ray.collision_point);
+			//console.log(coll_node.name, ray.collision_point);
 			if( coll_node.is_character ) //if character clicked
 			{
 				//...
@@ -338,41 +336,3 @@ function init()
 	loop();
 	setChatPosition();
 }
-
-//init();
-
-
-/*
-var canvas2D = document.createElement("canvas");
-canvas2D.width = 512;
-canvas2D.height = 512;
-//document.body.appendChild( canvas2D );
-var tex_canvas = null;
-function updateCanvas2D()
-{
-	var ctx = canvas2D.getContext("2d");
-	ctx.fillStyle = "red";
-	ctx.fillRect(0,0,canvas2D.width, canvas2D.height );
-	ctx.fillStyle = "blue";
-	ctx.save();
-	ctx.translate(canvas2D.width * 0.5,canvas2D.height * 0.5);
-	ctx.rotate( getTime() * 0.001 );
-	ctx.fillRect(-50,-50,100,100);
-	ctx.restore();
-
-	if(!tex_canvas)
-		gl.textures["canvas_texture"] = tex_canvas = GL.Texture.fromImage(canvas2D);
-	else
-		tex_canvas.uploadImage(canvas2D);
-}
-*/
-
-/*
-var video = document.createElement("video");
-video.src = "../disney.mp4";
-video.autoplay = true;
-video.volume = 0.1;
-video.oncanplay = function(){
-	document.body.appendChild( video );
-}
-*/

@@ -33,6 +33,21 @@ textarea{
 	height: 50px;	
 }
 
+.imageNext {
+	position: absolute;
+	cursor:pointer;
+	width: 75px;
+	height: 75px;	
+}
+
+.imageClose {
+	position: absolute;
+	cursor:pointer;
+	width: 25;
+	height: 25px;	
+}
+
+
 .hidden{
 	display:none;
 }
@@ -77,14 +92,12 @@ textarea{
   	justify-content: center;
 }
 
-
 .messages_container{
 	background: white;
 	width: 99%;
 	height: 80%;
 	overflow: auto;
 }
-
 
 .chat_2{
 	width:100%;
@@ -181,7 +194,6 @@ textarea{
 .selected{
 	opacity: 1;
 }
-
 
 
 .private_message_text{
