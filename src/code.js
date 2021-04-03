@@ -105,13 +105,15 @@ function update(dt)
 			if(is_moving && room_users_list[i].id!=myPorfile.id ){
 				
 				
-				//vec3.scale( room_users_list[i].fut_pos, room_users_list[i].fut_pos, dt );
+				//vec3.scale( room_users_list[i].fut_pos, room_users_list[i].fut_pos, room_users_list[i].dt );
 				
 				characters_list[i].moveLocal( room_users_list[i].fut_pos );
 				characters_list[i].anim_name = "walking";
 				characters_list[i].dance = false;
 				characters_list[i].position = walk_area.adjustPosition( characters_list[i].position );
 				room_users_list[i].fut_pos=[0,0,0];
+				characters_list[i].position=room_users_list[i].pos;
+				
 				
 			}
 			else if(room_users_list[i].id!=myPorfile.id && is_moving==false){
@@ -120,9 +122,12 @@ function update(dt)
 			}
 			
 			//rotation de cada character
-			if(room_users_list[i].fut_rot!=room_users_list[i].rot){
-				characters_list[i].rotate(dt*room_users_list[i].fut_rot,[0,1,0]);
+			if(room_users_list[i].fut_rot!=0){
+				characters_list[i].rotation=room_users_list[i].fut_rot_aux;
+				//characters_list[i].rotate(room_users_list[i].fut_rot,[0,1,0]);
+				room_users_list[i].rot=room_users_list[i].fut_rot_aux;
 				room_users_list[i].fut_rot=0;
+				
 				
 			}
 			
@@ -218,32 +223,38 @@ function userMovement( character, dt )
 	var angle=0;
 	if( gl.keys["A"] ){
 		character.rotate(dt*1.5,[0,1,0]);
-		angle=1.5;
+		angle=dt*1.5;
 		rotacion=true;
+		
 	}
 	else if( gl.keys["D"] ){
 		character.rotate(dt*-1.5,[0,1,0]);
-		angle=-1.5;
+		angle=dt*-1.5;
 		rotacion=true;
 	}
 		
-
+	//room_users_list[i_aux].rot=room_users_list[i_aux].rot+angle;
 	character.position = walk_area.adjustPosition( character.position );
 	if(is_moving){
 		var msg = {
 			type: "move",
 			id:myPorfile.id ,
 			pos:character.position,
-			fut_pos:delta
+			fut_pos:delta,
+			dt:dt
 		};
 
 		socket.socket.send(JSON.stringify( msg ));
 	}
-	else if(rotacion){
+	if(rotacion){
+		console.log("rotation");
+		console.log(character.rotation);
 		var msg = {
 			type: "rotation",
 			id:myPorfile.id ,
-			fut_rot:angle
+			angle:character.rotation,
+			fut_rot:angle,
+			dt:dt
 		};
 
 		socket.socket.send(JSON.stringify( msg ));
