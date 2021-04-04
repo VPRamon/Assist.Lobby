@@ -16,7 +16,7 @@ gl.onkeydown = onKey;
 
 //camera
 var camera = new RD.Camera();
-camera.lookAt([0,1.5,4],[0,1,0],[0,1,0]); //to set eye,center and up
+camera.lookAt([0,1.5,2.8],[0,1,0],[0,1,0]); //to set eye,center and up
 camera.fov = 60;
 
 //renderer of the scene

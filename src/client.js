@@ -5,7 +5,7 @@ var myPorfile ={
 	username: "",
 	category: "",
 	room:"",
-	skin:0
+	skin:""
 };
 
 function loginResponse(){};
@@ -141,16 +141,17 @@ function Connection(){
 				}
 				break;
 								
-			case("disconnected"):				
+			case("disconnected"):
 				console.log("User "+msg.id+" has disconnected");
 				
-				for(var i = 0; i < room_users_list.length; i++){
+				let len = room_users_list.length;
+				for(var i = 0; i < len; i++){
 					if(room_users_list[i].id==msg.id){
 						console.log("deleted");
 						room_users_list.splice(i,1);
 						characters_list.splice(i,1);
 						var node_to_delete=scene.root.getAllChildren();
-						scene.root.removeChild(node_to_delete[i+4]);
+						scene.root.removeChild(node_to_delete[node_to_delete.length-len+i]);
 					}
 				}
 				console.log(scene.root);
@@ -170,6 +171,29 @@ function Connection(){
 						scene.root.removeChild(node_to_delete[i+4]);
 					}
 				}
+				var node_to_delete=scene.root.getAllChildren();
+				// to do (David)
+                for(var i =1;i<node_to_delete.length;i++){
+                    scene.root.removeChild(node_to_delete[i]);
+                }
+				var room_node = new RD.SceneNode();
+                room_node.name = "room";
+                room_node.flags.two_sided = true;
+                room_node.mesh = "resources/data/room.obj";
+                room_node.textures.color = "resources/data/room.png";
+                room_node.position=[0,0.01,0];
+                scene.root.addChild( room_node );
+
+                var table = new RD.SceneNode();
+                table.name = "table";
+                table.mesh = "resources/data/table_despatx/Vintage Desk.obj";
+                table.texture = "resources/data/table_despatx/Texture/Desk/Wood_DeskMain.png";
+                table.scale(0.8);
+                table.position=[1.5,0,0.14];
+                table.rotation=[0,-0.7,0,0.7];
+
+                scene.root.addChild( table );
+                scene.root.addChild( node_to_delete[node_to_delete.length-1] );
 				
 				//console.log(msg.content);
 				room_users_list.push(msg.content);
@@ -241,7 +265,8 @@ function requestRoom(category){
 	var msg = {
 			type:"room",
 			username:myPorfile.username,
-			category:category
+			category:category,
+			skin:myPorfile.skin
 	};				
 	socket.socket.send(JSON.stringify(msg));
 }

@@ -170,37 +170,43 @@ var office = function(employee_id){
 		return 1;
 	}
 	
-	this.onNextClient = function(category){
-		//console.log("WR: ",DB.list_of_cat[category]);
-		//console.log("len: ",DB.list_of_cat[category][0].len());
-		if(that.is_free == true && DB.list_of_cat[category][0].len() > 0){	// to do (chech if ANY client in waiting rooms, ont just i first)
-			that.is_free = false;		// Set office as occupied
+	this.onNextClient = function(){
+		
+		if(that.is_free == true){	// to do (chech if ANY client in waiting rooms, ont just i first)			
 			let next_room = 0;			// Search next client
-			let lower_ticket = DB.list_of_cat[category][0].userTicket();
-			for (room = 1; room < DB.list_of_cat[category]; i++){
-				ticket = DB.list_of_cat[category][room].userTicket();
-				if(ticket < lower_ticket){
-					lower_ticket = ticket;
-					next_room = room;
+			let lower_ticket = Infinity; // DB.list_of_cat[category][0].userTicket();
+			for (category = 0; category < Object.keys(cat_dict).length; category++){
+				// to do (Not iterating)
+				for (room = 0; room < DB.list_of_cat[category]; i++){
+					ticket = DB.list_of_cat[category][room].userTicket();
+					if(ticket < lower_ticket){
+						lower_ticket = ticket;
+						next_room = room;
+					}
 				}
 			}
-			that.client_id = DB.list_of_cat[category][next_room].onUserDeparts();
-			
-			DB.onlineClients[that.client_id].room = that.id;
-			var msg_user_emplo = {
-				type: "office",
-				content: new info_to_send(DB.onlineEmployees[that.employee_id])
-			};		
-			DB.onlineClients[that.client_id].connection.send(JSON.stringify( msg_user_emplo ));	// Inform user of employees properties
-						
-			var msg_emplo_user = {
-				type: "office",
-				content: new info_to_send(DB.onlineClients[that.client_id])
-			};			
-			DB.onlineEmployees[that.employee_id].connection.send(JSON.stringify( msg_emplo_user ))	// Inform employee of user arrival
-		
+			console.log("lower Ticket: ", lower_ticket);
+			if(lower_ticket < Infinity){
+				that.is_free = false;		// Set office as occupied
+				that.client_id = DB.list_of_cat[category][next_room].onUserDeparts();
+				console.log("Client found! wellcome: ", that.client_id);
+				DB.onlineClients[that.client_id].room = that.id;
+				var msg_user_emplo = {
+					type: "office",
+					content: new info_to_send(DB.onlineEmployees[that.employee_id])
+				};		
+				DB.onlineClients[that.client_id].connection.send(JSON.stringify( msg_user_emplo ));	// Inform user of employees properties
+
+				var msg_emplo_user = {
+					type: "office",
+					content: new info_to_send(DB.onlineClients[that.client_id])
+				};			
+				DB.onlineEmployees[that.employee_id].connection.send(JSON.stringify( msg_emplo_user ))	// Inform employee of user arrival
+			}else{
+				console.log("No clients available");
+			}
 		}else{
-			console.log("Occupied office");
+			console.log("Occupied office!");
 		}
 	}
 	
@@ -425,10 +431,9 @@ function onUserMessage( connection, msg ){
 		console.log("unkown sender");
 }
 
-function onNextClient(connection, msg){
+function onNextClient(connection){
 	let employee_id = connection.id;
-	let category = cat_dict[msg.category];
-	DB.availableOffices[employee_id].onNextClient(category);	// to do (employee iteraction with nextClient method)
+	DB.availableOffices[employee_id].onNextClient();	// to do (employee iteraction with nextClient method)
 }
 
 // call when we a user updates its position
@@ -515,7 +520,7 @@ wsServer.on('request', function(request) {
 					break;
 					
 				case("nextClient"):
-					onNextClient( connection, msg);
+					onNextClient( connection);
 					break;
 			}
         }

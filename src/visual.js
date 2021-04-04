@@ -151,9 +151,10 @@ function registerResponse(pass){
 
 function clearChat(){
 	let msgs_container = document.getElementById("id_messages_container");
-	while (msgs_container.firstChild) {
+	/*while (msgs_container.firstChild) {
 		msgs_container.removeChild(msgs_container.lastChild);
-	  }
+	  }*/
+	msgs_container.textContent = '';
 }
 
 function changeTitle(employee_username){
@@ -214,7 +215,9 @@ close_btn.addEventListener("click",function(e){
 	location.reload();
 });
 
-
+function selectSkin(skin){
+	myPorfile.skin = skin;
+}
 
 var active_box = 'login_box';
 function displayMenu(box){
