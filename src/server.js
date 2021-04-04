@@ -141,7 +141,10 @@ var waitingRoom = function(id){
 		return that.list_of_users.shift();
 	}
 	this.userTicket = function(){
-		return that.list_of_users[0].ticket;
+		if(that.list_of_users.length > 0)
+			return DB.onlineClients[that.list_of_users[0]].ticket;
+		else
+			return Infinity
 	}
 	this.sendMessage = function(emisor_id, msg){
 		that.list_of_users.forEach( function myFunction(id, index, array) {
@@ -173,22 +176,22 @@ var office = function(employee_id){
 	this.onNextClient = function(){
 		
 		if(that.is_free == true){	// to do (chech if ANY client in waiting rooms, ont just i first)			
+			let next_cat = 0;			// Search next client
 			let next_room = 0;			// Search next client
 			let lower_ticket = Infinity; // DB.list_of_cat[category][0].userTicket();
-			for (category = 0; category < Object.keys(cat_dict).length; category++){
-				// to do (Not iterating)
-				for (room = 0; room < DB.list_of_cat[category]; i++){
+			for (category = 0; category < Object.keys(cat_dict).length; category++){				
+				for (room = 0; room < DB.list_of_cat[category].length; room++){
 					ticket = DB.list_of_cat[category][room].userTicket();
 					if(ticket < lower_ticket){
 						lower_ticket = ticket;
 						next_room = room;
+						next_cat = category;
 					}
 				}
 			}
-			console.log("lower Ticket: ", lower_ticket);
 			if(lower_ticket < Infinity){
 				that.is_free = false;		// Set office as occupied
-				that.client_id = DB.list_of_cat[category][next_room].onUserDeparts();
+				that.client_id = DB.list_of_cat[next_cat][next_room].onUserDeparts();
 				console.log("Client found! wellcome: ", that.client_id);
 				DB.onlineClients[that.client_id].room = that.id;
 				var msg_user_emplo = {
