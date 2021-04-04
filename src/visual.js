@@ -66,14 +66,6 @@ function getImage(url) {
 	img.src = url;
 	return img;
 }
-var background_img = getImage("resources/myphoto.png");
-
-//maps a value from one domain to another
-function map_range( value, low1, high1, low2, high2) {
-    var range1 = high1 - low1;
-    var range2 = high2 - low2;
-	return low2 + range2 * (value - low1) / range1;
-}
 
 function scrollToEnd(){
 	var chat = document.getElementById("id_messages_container");

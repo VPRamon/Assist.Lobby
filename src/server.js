@@ -279,7 +279,15 @@ var Database = function(){
 			// to do (inform clients in room)
 		}else if (user_id in that.onlineEmployees){
 			console.log("Goodbye "+that.onlineEmployees[user_id].username);
-			delete that.availableOffices[user_id];					// Remove office
+			if(!that.availableOffices[user_id].is_free){
+				let client_id = that.availableOffices[user_id].client_id;
+				let msg = {
+					type:"session closed"
+				}
+				DB.onlineClients[client_id].connection.send(JSON.stringify(msg));
+				that.onUserDisconnected(client_id);
+			}
+			delete that.availableOffices[user_id];						// Remove office
 			delete that.onlineEmployees[user_id];						// Remove user from Database
 		}else{
 			// to do (handle error user not found on disconected)

@@ -228,6 +228,9 @@ function Connection(){
 					myPorfile.username = msg.username;
 				}
 				break;
+				
+			case("session closed"):
+				location.reload();
 		}
 			
 	}
