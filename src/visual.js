@@ -208,7 +208,7 @@ close_btn.addEventListener("click",function(e){
 });
 
 function selectSkin(skin){
-	myPorfile.skin = skin;
+	myProfile.skin = skin;
 }
 
 var active_box = 'login_box';

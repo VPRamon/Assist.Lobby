@@ -88,7 +88,7 @@ function update(dt)
 	
 	for(var i = 0; i < room_users_list.length; i++){
 		
-		if(room_users_list[i].id==myPorfile.id){
+		if(room_users_list[i].id==myProfile.id){
 			i_aux=i;	
 		}
 		else{
@@ -102,7 +102,7 @@ function update(dt)
 				characters_list[i].skeleton = anim1.skeleton; //this could be useful
 			}
 			//move de cada character
-			if(is_moving && room_users_list[i].id!=myPorfile.id ){
+			if(is_moving && room_users_list[i].id!=myProfile.id ){
 				
 				
 				//vec3.scale( room_users_list[i].fut_pos, room_users_list[i].fut_pos, room_users_list[i].dt );
@@ -116,7 +116,7 @@ function update(dt)
 				
 				
 			}
-			else if(room_users_list[i].id!=myPorfile.id && is_moving==false){
+			else if(room_users_list[i].id!=myProfile.id && is_moving==false){
 				characters_list[i].anim_name = characters_list[i].dance ? "dancing" : "idle";
 				//console.log("quieto");
 			}
@@ -238,7 +238,7 @@ function userMovement( character, dt )
 	if(is_moving){
 		var msg = {
 			type: "move",
-			id:myPorfile.id ,
+			id:myProfile.id ,
 			pos:character.position,
 			fut_pos:delta,
 			dt:dt
@@ -249,7 +249,7 @@ function userMovement( character, dt )
 	if(rotacion){
 		var msg = {
 			type: "rotation",
-			id:myPorfile.id ,
+			id:myProfile.id ,
 			angle:character.rotation,
 			fut_rot:angle,
 			dt:dt

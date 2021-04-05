@@ -1,6 +1,6 @@
 var room_users_list=[];
 var characters_list=[];
-var myPorfile ={
+var myProfile ={
 	id:-1,
 	username: "",
 	category: "",
@@ -161,7 +161,10 @@ function Connection(){
 				console.log("preparing office");
 				clearChat();
 				changeTitle( msg.content.username);
-
+				if(myProfile.role == "employee")
+					createRoom(myProfile.id);
+				else if (myProfile.role == "client")
+					joinRoom(msg.content.id)
 				// to do msg.id = idefied
 				for(var i = 1; i < room_users_list.length; i++){
 					if(room_users_list[i].id!=msg.id){
@@ -215,17 +218,18 @@ function Connection(){
 				
 			case("login"):
 				loginResponse(msg.role);
+				myProfile.role = msg.role;
 				if(msg.id > 0){
-					myPorfile.id = msg.id;
-					myPorfile.username = msg.username;
+					myProfile.id = msg.id;
+					myProfile.username = msg.username;
 				}
 				break;
 			
 			case("register"):
 				registerResponse(msg.content);
 				if(msg.id > 0){
-					myPorfile.id = msg.id;
-					myPorfile.username = msg.username;
+					myProfile.id = msg.id;
+					myProfile.username = msg.username;
 				}
 				break;
 				
@@ -244,7 +248,7 @@ function Connection(){
 socket = new Connection();
 
 function loginUser(username, password){
-	myPorfile.username=username;
+	myProfile.username=username;
 	var msg = {
 			type:"login",
 			username:username,
@@ -254,7 +258,7 @@ function loginUser(username, password){
 }
 
 function registerUser(username, password){
-	myPorfile.username=username;
+	myProfile.username=username;
 	var msg = {
 			type:"register",
 			username:username,
@@ -264,12 +268,12 @@ function registerUser(username, password){
 }
 
 function requestRoom(category){
-	myPorfile.category=category;
+	myProfile.category=category;
 	var msg = {
 			type:"room",
-			username:myPorfile.username,
+			username:myProfile.username,
 			category:category,
-			skin:myPorfile.skin
+			skin:myProfile.skin
 	};				
 	socket.socket.send(JSON.stringify(msg));
 }
@@ -286,7 +290,7 @@ function sendMessage(txt){
 	var msg = {
 		type: "text",
 		content:txt,
-		username:myPorfile.username,
+		username:myProfile.username,
 	};
 
 	//console.log("Senidng message", JSON.stringify( msg ));
