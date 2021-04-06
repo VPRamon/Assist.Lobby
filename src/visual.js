@@ -155,6 +155,13 @@ function changeTitle(employee_username){
 		
 }
 
+function updateTicket(ticket, type){
+	if(type == "set")
+		document.getElementById("ticket_txt").innerHTML = "Ticket: "+ticket;
+	else if (type == update)
+		document.getElementById("ticket_txt").innerHTML = "Ticket: "+ticket + '/' + myProfile.ticket;
+};
+
 send_btn.addEventListener("click",function(e){	
 	msg_txt = message_txt.value;
 	if(msg_txt != ""){
@@ -231,6 +238,7 @@ function displayMenu(box){
 function setChatPosition(){
 	canvas_y_coord = document.getElementById('canvas').getBoundingClientRect().y;
 	canvas_x_coord = document.getElementById('canvas').getBoundingClientRect().x;
+	canvas_width = document.getElementById('canvas').getBoundingClientRect().width;
 
 	document.getElementById("imageChat").style.top = canvas_y_coord + 5;
 	document.getElementById("imageChat").style.right = canvas_x_coord + 5;
@@ -243,5 +251,11 @@ function setChatPosition(){
 	
 	document.getElementById("imageClose").style.top = canvas_y_coord + 5;
 	document.getElementById("imageClose").style.left = canvas_x_coord + 5;
+	
+	document.getElementById("ticketContainer").style.top = canvas_y_coord;
+	document.getElementById("ticketContainer").style.left = canvas_x_coord + canvas_width/2;
+	
 }
+
+
 

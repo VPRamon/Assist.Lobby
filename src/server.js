@@ -192,6 +192,12 @@ var office = function(employee_id){
 			if(lower_ticket < Infinity){
 				that.is_free = false;		// Set office as occupied
 				that.client_id = DB.list_of_cat[next_cat][next_room].onUserDeparts();
+				DB.actualTicket = lower_ticket
+				msg = {
+					type:"ticket",
+					content:DB.actualTicket
+				}
+				DB.broadcast(that.client_id, JSON.stringify(msg));
 				console.log("Client found! wellcome: ", that.client_id);
 				DB.onlineClients[that.client_id].room = that.id;
 				var msg_user_emplo = {
@@ -233,6 +239,7 @@ var Database = function(){
 	this.list_of_cat = [];
 	this.availableOffices = {};
 	this.lastTicket = 1;
+	this.actualTicket = 1;
 	
 	this.new_wr = function(category){
 		let id = that.list_of_cat[category].length;
@@ -292,6 +299,14 @@ var Database = function(){
 		}else{
 			// to do (handle error user not found on disconected)
 		}
+	}
+	
+	this.broadcast = function(id, msg){
+		Object.keys(that.onlineClients).forEach(function(key) {
+			if( (!that.onlineClients[key].inOffice) && that.onlineClients[key].id != id){
+				that.onlineClients[key].connection.send(msg);
+			}
+		});
 	}
 	
 }
@@ -420,6 +435,11 @@ function onEnterRoom(connection, info){
 	DB.onlineClients[connection.id].ticket = DB.lastTicket;				// Specify ticket to user
 	DB.lastTicket += 1;													// increment ticket
 	DB.add_user_to_wr(connection.id, cat_dict[info.category]);			// Put user in room
+	let msg = {
+		type: "setTicket",
+		content: DB.actualTicket + '/' + DB.onlineClients[connection.id].ticket
+	};
+	connection.send(JSON.stringify(msg));
 }
 
 // call when we receive a message from a WebSocket

@@ -13,7 +13,7 @@ function registerResponse(){};
 function showMessage(txt){};
 function clearChat(){};
 function changeTitle(employee_username){};
-
+function updateTicket(ticket){};
 
 //scene container
 var scene = new RD.Scene();
@@ -53,6 +53,18 @@ room_node.position=[0,0.01,0];
 scene.root.addChild( room_node );
 
 
+var panel = new RD.SceneNode();
+panel.id = "panel";
+panel.name = "panel";
+panel.mesh = "resources/panel.obj";
+panel.texture = "resources/comp1.png";
+panel.position=[-.75,1,-.9];
+panel.scale([1, .75, 1]);
+scene.root.addChild( panel );
+
+var products = ["resources/comp1.png",
+				"resources/comp2.png"];
+
 function Connection(){
 	that = this;
 	//this.socket = new WebSocket("wss://ecv-etic.upf.edu/node/9022/ws/" );	
@@ -75,6 +87,15 @@ function Connection(){
 		switch(msg.type){			
 			case("text"):
 				showMessage(msg, "received");
+				break;
+				
+			case("setTicket"):
+				myProfile.ticket = msg.content;
+				updateTicket(myProfile.ticket, "set");
+				break;
+			case("ticket"):
+				let ticket = msg.content;
+				updateTicket(ticket, "update");
 				break;
 				
 			case("user_list"):
@@ -296,4 +317,11 @@ function sendMessage(txt){
 	//console.log("Senidng message", JSON.stringify( msg ));
 	showMessage(msg, "send");
 	socket.socket.send(JSON.stringify( msg ));
+}
+
+function changeProduct(i){
+	let node = scene.getNodeById("panel");
+	//console.log(node);
+	if(i>0 && i< products.length)
+		node.texture = products[i];
 }
