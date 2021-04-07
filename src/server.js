@@ -18,6 +18,10 @@ var employee = function(con, id, username){
 	this.skin;
 	this.room=id;
 	this.category=1;
+	this.skin="resources/data/doozy/scary_clown_walk___Ch19Controller.wbin";
+    this.texture="resources/data/doozy/Ch19_1001_Diffuse.png";
+    this.animations = {};
+	this.type=2;
 	var that = this;
 	this.state = {
 		pos:[0,0,0],
@@ -36,6 +40,7 @@ var employee = function(con, id, username){
 			that.state.rot = msg.angle;
 		}
 	}
+	
 }
 
 var user = function(con, id, username, skin, category){
@@ -47,6 +52,10 @@ var user = function(con, id, username, skin, category){
 	this.room;
 	this.inOffice = false;
 	this.ticket;
+	this.skin;
+    this.texture;
+    this.type=skin;
+    this.animations = {};
 	var that = this;
 	this.state = {
 		pos:[0,0,0],
@@ -77,6 +86,10 @@ var info_to_send = function(_user){
 	this.fut_pos=_user.state.fut_pos;
 	this.skin= _user.skin;
 	this.dt=_user.state.dt;
+	this.type=_user.type;
+    this.skin= _user.skin;
+    this.texture=_user.texture;
+    this.animations=_user.animations;
 }
 
 var waitingRoom = function(id){
@@ -84,9 +97,11 @@ var waitingRoom = function(id){
 	this.limit = 3;
 	this.list_of_users = [];
 	var that = this;
+	
 	this.len = function(){
 		return that.list_of_users.length;
 	}
+	
 	this.onNewUser = function(newUser){
 		if(that.len() < that.limit){
 			that.list_of_users.push(newUser);
@@ -117,6 +132,7 @@ var waitingRoom = function(id){
 			console.log("limit exceeded");
 		}
 	}
+	
 	this.onUserQuits = function(user_id){
 		i = that.list_of_users.indexOf(user_id);
 		
@@ -128,6 +144,7 @@ var waitingRoom = function(id){
 		that.sendMessage(user_id, JSON.stringify( msg_user_prop ));
 		delete that.list_of_users.splice(i,1);
 	}
+	
 	this.onUserDeparts = function(){
 		
 		let user_id=that.list_of_users[0];
@@ -140,12 +157,14 @@ var waitingRoom = function(id){
 		
 		return that.list_of_users.shift();
 	}
+	
 	this.userTicket = function(){
 		if(that.list_of_users.length > 0)
 			return DB.onlineClients[that.list_of_users[0]].ticket;
 		else
 			return Infinity
 	}
+	
 	this.sendMessage = function(emisor_id, msg){
 		that.list_of_users.forEach( function myFunction(id, index, array) {
 			if(id != emisor_id)
@@ -173,7 +192,7 @@ var office = function(employee_id){
 		return 1;
 	}
 	
-	this.onNextClient = function(){
+	this.onNextClient = function(callToken){
 		
 		if(that.is_free == true){	// to do (chech if ANY client in waiting rooms, ont just i first)			
 			let next_cat = 0;			// Search next client
@@ -202,14 +221,15 @@ var office = function(employee_id){
 				DB.onlineClients[that.client_id].room = that.id;
 				var msg_user_emplo = {
 					type: "office",
-					content: new info_to_send(DB.onlineEmployees[that.employee_id])
+					content: new info_to_send(DB.onlineEmployees[that.employee_id]),
+					callToken:callToken
 				};		
 				DB.onlineClients[that.client_id].connection.send(JSON.stringify( msg_user_emplo ));	// Inform user of employees properties
 
 				var msg_emplo_user = {
 					type: "office",
-					content: new info_to_send(DB.onlineClients[that.client_id])
-				};			
+					content: new info_to_send(DB.onlineClients[that.client_id]),					
+				};
 				DB.onlineEmployees[that.employee_id].connection.send(JSON.stringify( msg_emplo_user ))	// Inform employee of user arrival
 			}else{
 				console.log("No clients available");
@@ -280,7 +300,7 @@ var Database = function(){
 			room = that.onlineClients[user_id].room;
 			if(that.onlineClients[user_id].inOffice)
 				that.availableOffices[room].onUserLeaves();
-			else
+			else if (!that.onlineClients[user_id].inOffice)
 				that.list_of_cat[category][room].onUserQuits(user_id);	// Remove user from room
 			delete that.onlineClients[user_id];							// Remove user from Database
 			// to do (inform clients in room)
@@ -334,14 +354,13 @@ function onUserLogin( connection, info ){
 			throw err;
 		}
 	 	
-		var msg = {
-			type: "login",
-			role: "error",
-			id: -1,
-			username: info.username
-		};
-		
 		if(results.length==1){
+			var msg = {
+				type: "login",
+				role: "error",
+				id: -1,
+				username: info.username
+			};
 			user_id = results[0].user_id;
 			if( (user_id in DB.onlineEmployees) || (user_id in DB.onlineClients) ){
 			   console.log("User already logged");
@@ -351,8 +370,9 @@ function onUserLogin( connection, info ){
 				connection['id'] = results[0].user_id;
 				if(results[0].is_employee){
 					msg.role = "employee";
+					connection.send(JSON.stringify(msg));
 					DB.onlineEmployees[user_id] = new employee(connection, user_id, info.username);
-					DB.new_office(user_id);	
+					DB.new_office(user_id);					
 					var msg2 = {
 						type: "office",
 						content: new info_to_send(DB.onlineEmployees[user_id])
@@ -363,13 +383,21 @@ function onUserLogin( connection, info ){
 				}else{
 					msg.role = "client";
 					DB.onlineClients[user_id] = new user(connection, user_id, info.username);
+					connection.send(JSON.stringify(msg));
+
 				}
 			}
 		}
 		else{
+			let msg = {
+				type: "register",
+				role: "client",
+				id: -1,
+				username: info.username
+			};
+			connection.send(JSON.stringify(msg));
 			console.log("login error!");
 		}	 
-		connection.send(JSON.stringify(msg));
 		client.end();
 	});	
 }
@@ -386,14 +414,14 @@ function onUserRegister( connection, info ){
 			throw err;
 		}
 	 	
-		var msg = {
-			type: "register",
-			role: "client",
-			id: -1,
-			username: info.username
-		};
-		
 		if(results.length==0){
+			var msg = {
+				type: "register",
+				role: "client",
+				id: -1,
+				username: info.username
+			};
+			
 			let md5 = crypto.createHmac("md5","my_salt_2017*(D-R)");
 			enc_password = md5.update(info.password).digest("hex");
 			client.query(
@@ -413,6 +441,7 @@ function onUserRegister( connection, info ){
 					msg.id = results[0].user_id;
 					connection['id'] = results[0].user_id;
 					DB.onlineClients[results[0].user_id] = new user(connection, results[0].user_id, info.username);
+					connection.send(JSON.stringify(msg));
 				}
 				else{
 					console.log("login error after register!");
@@ -421,11 +450,18 @@ function onUserRegister( connection, info ){
 			
 		}
 		else{
+			let msg = {
+				type: "register",
+				role: "client",
+				id: -1,
+				username: info.username
+			};
+			connection.send(JSON.stringify(msg));
 			console.log("username "+info.username+" already exists!");
 			// to do (send error to client)
 		}
 						
-		connection.send(JSON.stringify(msg));
+		
 		client.end();
 	});
 }
@@ -434,11 +470,21 @@ function onEnterRoom(connection, info){
 	DB.onlineClients[connection.id].category = cat_dict[info.category]; // Specify category to user
 	DB.onlineClients[connection.id].ticket = DB.lastTicket;				// Specify ticket to user
 	DB.lastTicket += 1;													// increment ticket
-	DB.add_user_to_wr(connection.id, cat_dict[info.category]);			// Put user in room
+	DB.onlineClients[connection.id].type=info.skin;
+	if(info.skin==0){
+        DB.onlineClients[connection.id].skin="resources/data/boy/ch09_nonpbr___Ch09Controller.wbin";
+        DB.onlineClients[connection.id].texture="resources/data/boy/ch09_1001_diffuse.png";
+    }
+    else if(info.skin==1){
+        DB.onlineClients[connection.id].skin="resources/data/girl.wbin";
+        DB.onlineClients[connection.id].texture="resources/data/girl_low.png";
+    }
 	let msg = {
 		type: "setTicket",
-		content: DB.actualTicket + '/' + DB.onlineClients[connection.id].ticket
+		lastTicket: DB.actualTicket,
+		myTicket: DB.onlineClients[connection.id].ticket
 	};
+	DB.add_user_to_wr(connection.id, cat_dict[info.category]);			// Put user in room
 	connection.send(JSON.stringify(msg));
 }
 
@@ -462,9 +508,9 @@ function onUserMessage( connection, msg ){
 		console.log("unkown sender");
 }
 
-function onNextClient(connection){
+function onNextClient(connection, callToken){
 	let employee_id = connection.id;
-	DB.availableOffices[employee_id].onNextClient();	// to do (employee iteraction with nextClient method)
+	DB.availableOffices[employee_id].onNextClient(callToken);	// to do (employee iteraction with nextClient method)
 }
 
 // call when we a user updates its position
@@ -551,7 +597,7 @@ wsServer.on('request', function(request) {
 					break;
 					
 				case("nextClient"):
-					onNextClient( connection);
+					onNextClient( connection, msg.callToken);
 					break;
 			}
         }

@@ -114,15 +114,22 @@ function loginResponse(pass){
 			console.log("Loged In as client!!");
 			document.getElementById("popup-loginMenu").classList.toggle("active");	
 			document.getElementById('popup-roomMenu').classList.toggle('active');
+
 			break;
 		case("employee"):
 			console.log("Loged In as employee!!");
 			document.getElementById("popup-loginMenu").classList.toggle("active");	
 			document.getElementById('content').classList.toggle('hidden');
 			document.getElementById('imageNext').classList.toggle('hidden');
+			document.getElementById('ticketContainer').classList.toggle('hidden');
+			// Generate unique token for p2p call
+			myProfile.uniqueToken = Math.random().toString(36).replace('.','');
+			//console.log("creating peer");
+			createRoom(myProfile.uniqueToken);
 			init()
 			break;
 		 default:
+			alert("Wrong username or password!");
 			console.log("Loged IN FAILED!! response ",pass);
 
 	}
@@ -136,6 +143,7 @@ function registerResponse(pass){
 		document.getElementById('popup-roomMenu').classList.toggle('active');
 	}
 	else{
+		alert("Username already exists!\nTry a different one.");
 		console.log("Register IN FAILED!!");
 		//try again
 	}
@@ -158,7 +166,7 @@ function changeTitle(employee_username){
 function updateTicket(ticket, type){
 	if(type == "set")
 		document.getElementById("ticket_txt").innerHTML = "Ticket: "+ticket;
-	else if (type == update)
+	else if (type == "update")
 		document.getElementById("ticket_txt").innerHTML = "Ticket: "+ticket + '/' + myProfile.ticket;
 };
 
@@ -193,11 +201,11 @@ register_btn.addEventListener("click",function(e){
 });
 
 enterRoom_btn.addEventListener("click",function(e){
-	category = document.querySelector("#category_dropDown").value;		
-	
+	category = document.querySelector("#category_dropDown").value;
 	requestRoom(category);
 	document.getElementById("popup-roomMenu").classList.toggle("active");	
 	document.getElementById('content').classList.toggle('hidden');
+
 	init()
 });
 
@@ -215,6 +223,14 @@ close_btn.addEventListener("click",function(e){
 });
 
 function selectSkin(skin){
+	if(skin==0){
+		document.getElementById("skin1").classList.remove('selected');
+		document.getElementById("skin0").classList.add('selected');
+	} else if(skin==1){
+		document.getElementById("skin0").classList.remove('selected');
+		document.getElementById("skin1").classList.add('selected');
+	}
+	
 	myProfile.skin = skin;
 }
 
@@ -252,8 +268,9 @@ function setChatPosition(){
 	document.getElementById("imageClose").style.top = canvas_y_coord + 5;
 	document.getElementById("imageClose").style.left = canvas_x_coord + 5;
 	
+	ticketContainer_width = document.getElementById('ticketContainer').getBoundingClientRect().width;
 	document.getElementById("ticketContainer").style.top = canvas_y_coord;
-	document.getElementById("ticketContainer").style.left = canvas_x_coord + canvas_width/2;
+	document.getElementById("ticketContainer").style.left = canvas_x_coord + canvas_width/2 - ticketContainer_width/2;
 	
 }
 

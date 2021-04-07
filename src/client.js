@@ -53,17 +53,34 @@ room_node.position=[0,0.01,0];
 scene.root.addChild( room_node );
 
 
-var panel = new RD.SceneNode();
-panel.id = "panel";
-panel.name = "panel";
-panel.mesh = "resources/panel.obj";
-panel.texture = "resources/comp1.png";
-panel.position=[-.75,1,-.9];
-panel.scale([1, .75, 1]);
-scene.root.addChild( panel );
-
 var products = ["resources/comp1.png",
 				"resources/comp2.png"];
+
+var animations1 = {};
+var animations2 = {};
+var animations3 = {};
+
+
+
+function loadAnimation( list, name, url )
+{
+    var anim = new RD.SkeletalAnimation();
+    anim.load(url);
+    list[ name ] = anim;
+    return list;
+}
+
+animations1=loadAnimation(animations1,"idle", "resources/data/boy/animations_breathingidle.skanim");
+animations1=loadAnimation(animations1,"walking", "resources/data/boy/animations_strutwalking.skanim");
+animations1=loadAnimation(animations1,"dancing", "resources/data/boy/animations_snakehiphopdance.skanim");
+
+animations2=loadAnimation(animations2,"idle", "resources/data/anims/girl_idle.skanim");
+animations2=loadAnimation(animations2,"walking", "resources/data/anims/girl_walking.skanim");
+animations2=loadAnimation(animations2,"dancing", "resources/data/anims/girl_dancing.skanim");
+
+animations3=loadAnimation(animations3,"idle", "resources/data/doozy/animations_oldmanidle.skanim");
+animations3=loadAnimation(animations3,"walking", "resources/data/doozy/animations_scaryclownwalk.skanim");
+animations3=loadAnimation(animations3,"dancing", "resources/data/doozy/animations_twistdance.skanim");
 
 function Connection(){
 	that = this;
@@ -90,8 +107,8 @@ function Connection(){
 				break;
 				
 			case("setTicket"):
-				myProfile.ticket = msg.content;
-				updateTicket(myProfile.ticket, "set");
+				myProfile.ticket = msg.myTicket;
+				updateTicket(msg.lastTicket+'/'+myProfile.ticket, "set");
 				break;
 			case("ticket"):
 				let ticket = msg.content;
@@ -100,9 +117,20 @@ function Connection(){
 				
 			case("user_list"):
 				room_users_list=msg.content;
-				//console.log("estamos");
-				//console.log(room_users_list);
 				for (var i=0; i<room_users_list.length;i++){
+					if(room_users_list[i].type==2){
+
+                        room_users_list[i].animations=animations3;
+
+                    }
+                    else if(room_users_list[i].type==0){
+                        console.log("entra type 0");
+                        room_users_list[i].animations=animations1;
+
+                    }
+                    else if(room_users_list[i].type==1){
+                        room_users_list[i].animations=animations2;
+                    }
 					var character = new RD.SceneNode();
 					character.name = room_users_list[i].id;
 					character.layers = CHARACTERS_LAYER; //layer 0b1 and 0b10 is for objects, layer 0b100 for characters
@@ -110,8 +138,8 @@ function Connection(){
 					character.scale(0.01);
 					character.position=room_users_list[i].pos;
 					character.rotation=room_users_list[i].rot;
-					character.mesh = "resources/data/girl.wbin";
-					character.texture = "resources/data/girl_low.png";
+					character.mesh=room_users_list[i].skin;
+                    character.texture=room_users_list[i].texture;
 					character.anim_name = "idle";
 					scene.root.addChild( character );
 					characters_list.push(character);
@@ -123,6 +151,17 @@ function Connection(){
 			case("new_user"):
 				console.log("Nuevo usuario en la sala.");
 				room_users_list.push(msg.content);
+				if(msg.content.type==2){
+                        room_users_list[room_users_list.length-1].animations=animations3;
+
+                }
+                else if(msg.content.type==0){
+                    room_users_list[room_users_list.length-1].animations=animations1;
+                }
+                else if(msg.content.type==1){
+                    console.log("entra chica");
+                    room_users_list[room_users_list.length-1].animations=animations2;
+                }
 				var character = new RD.SceneNode();
 				character.name = msg.content.id;
 				character.layers = CHARACTERS_LAYER; //layer 0b1 and 0b10 is for objects, layer 0b100 for characters
@@ -131,8 +170,8 @@ function Connection(){
 				character.position=msg.content.pos;
 				character.rotation=msg.content.rot;
 				//character.rotate(msg.content.rot,[0,1,0]);
-				character.mesh = "resources/data/girl.wbin";
-				character.texture = "resources/data/girl_low.png";
+				character.mesh = msg.content.skin;
+                character.texture = msg.content.texture;
 				character.anim_name = "idle";
 				scene.root.addChild( character );
 				characters_list.push(character);				
@@ -173,6 +212,7 @@ function Connection(){
 						characters_list.splice(i,1);
 						var node_to_delete=scene.root.getAllChildren();
 						scene.root.removeChild(node_to_delete[node_to_delete.length-len+i]);
+						break;
 					}
 				}
 				console.log(scene.root);
@@ -182,11 +222,12 @@ function Connection(){
 				console.log("preparing office");
 				clearChat();
 				changeTitle( msg.content.username);
-				if(myProfile.role == "employee")
-					createRoom(myProfile.id);
-				else if (myProfile.role == "client")
-					joinRoom(msg.content.id)
-				// to do msg.id = idefied
+				console.log(myProfile.role);
+				if (myProfile.role == "client"){
+					document.getElementById('ticketContainer').classList.toggle('hidden');
+					joinRoom(msg.callToken);
+				}
+				// to do msg.id = undefied
 				for(var i = 1; i < room_users_list.length; i++){
 					if(room_users_list[i].id!=msg.id){
 						room_users_list.splice(i,1);
@@ -207,7 +248,16 @@ function Connection(){
                 room_node.textures.color = "resources/data/room.png";
                 room_node.position=[0,0.01,0];
                 scene.root.addChild( room_node );
-
+				
+				var panel = new RD.SceneNode();
+				panel.id = "panel";
+				panel.name = "panel";
+				panel.mesh = "resources/panel.obj";
+				panel.texture = "resources/comp1.png";
+				panel.position=[-.75,1,-.9];
+				panel.scale([1, .75, 1]);
+				scene.root.addChild( panel );
+				
                 var table = new RD.SceneNode();
                 table.name = "table";
                 table.mesh = "resources/data/table_despatx/Vintage Desk.obj";
@@ -221,6 +271,20 @@ function Connection(){
 				
 				//console.log(msg.content);
 				room_users_list.push(msg.content);
+				if(msg.content.type==2){
+                    console.log("entra");
+                    room_users_list[room_users_list.length-1].animations=animations3;
+                    console.log(room_users_list[room_users_list.length-1].animations);
+
+                }
+                else if(msg.content.type==0){
+                    room_users_list[room_users_list.length-1].animations=animations1;
+
+                }
+                else if(msg.content.type==1){
+                    room_users_list[room_users_list.length-1].animations=animations2;
+
+                }
 				var character = new RD.SceneNode();
 				character.name = msg.content.id;
 				character.layers = CHARACTERS_LAYER; //layer 0b1 and 0b10 is for objects, layer 0b100 for characters
@@ -228,8 +292,8 @@ function Connection(){
 				character.scale(0.01);
 				character.position=msg.content.pos;
 				character.rotation=msg.content.rot;
-				character.mesh = "resources/data/girl.wbin";
-				character.texture = "resources/data/girl_low.png";
+				character.mesh = msg.content.skin;
+                character.texture = msg.content.texture;
 				character.anim_name = "idle";
 				scene.root.addChild( character );
 				characters_list.push(character);	
@@ -237,13 +301,13 @@ function Connection(){
 				break;
 			
 				
-			case("login"):
-				loginResponse(msg.role);
-				myProfile.role = msg.role;
+			case("login"):				
 				if(msg.id > 0){
 					myProfile.id = msg.id;
 					myProfile.username = msg.username;
 				}
+				loginResponse(msg.role);
+				myProfile.role = msg.role;
 				break;
 			
 			case("register"):
@@ -302,7 +366,7 @@ function requestRoom(category){
 function nextClient(category){
 	var msg = {
 		type: "nextClient",
-		category:category
+		callToken: myProfile.uniqueToken
 	};
 	socket.socket.send(JSON.stringify( msg ));
 }

@@ -22,20 +22,6 @@ camera.fov = 60;
 //renderer of the scene
 var renderer = new RD.Renderer(gl);
 
-//animations container
-var animations = {};
-
-function loadAnimation( name, url )
-{
-	var anim = new RD.SkeletalAnimation();
-	anim.load(url);
-	animations[ name ] = anim;
-}
-
-loadAnimation("idle", "resources/data/anims/girl_idle.skanim");
-loadAnimation("walking", "resources/data/anims/girl_walking.skanim");
-loadAnimation("dancing", "resources/data/anims/girl_dancing.skanim");
-
 //we need an skeletonm if we plan to do blending
 var skeleton = new RD.Skeleton(); //skeleton for blending
 
@@ -49,6 +35,7 @@ function draw()
 	canvas.width = document.getElementById('canvas-container').clientWidth;//window.innerWidth;
 	canvas.height = document.getElementById('canvas-container').clientHeight;//window.innerHeight;
 	camera.perspective(camera.fov,canvas.width / canvas.height,0.1,1000); //to render in perspective mode
+	setChatPosition()
 
 	//clear
 	gl.viewport( 0, 0, canvas.width, canvas.height );
@@ -62,23 +49,6 @@ function draw()
 function drawWorld( camera )
 {
 	renderer.render( scene, camera );
-
-	//render gizmos
-	//areas
-	//var vertices = walk_area.getVertices();
-	//if(vertices)
-	//	renderer.renderPoints(vertices,null,camera,null,null,0.1,gl.LINES);
-
-	/*
-	gl.disable( gl.DEPTH_TEST );
-	if(character.skeleton)
-	{
-		var vertices = character.skeleton.getVertices( character.getGlobalMatrix() );
-		if(vertices)
-			renderer.renderPoints(vertices,null,camera,null,null,0.1,gl.LINES);
-		gl.enable( gl.DEPTH_TEST );
-	}
-	*/
 }
 var i_aux=0;
 //CONTROLLER
@@ -89,11 +59,11 @@ function update(dt)
 	for(var i = 0; i < room_users_list.length; i++){
 		
 		if(room_users_list[i].id==myProfile.id){
-			i_aux=i;	
+			i_aux=i;
 		}
 		else{
 			var is_moving = vec3.length(room_users_list[i].fut_pos);
-			var anim1 = animations[ characters_list[i].anim_name ];
+			var anim1 = room_users_list[i].animations[ characters_list[i].anim_name ];
 			if(anim1 && anim1.duration)
 			{
 				anim1.assignTime( t, true );
@@ -102,46 +72,31 @@ function update(dt)
 				characters_list[i].skeleton = anim1.skeleton; //this could be useful
 			}
 			//move de cada character
-			if(is_moving && room_users_list[i].id!=myProfile.id ){
-				
-				
-				//vec3.scale( room_users_list[i].fut_pos, room_users_list[i].fut_pos, room_users_list[i].dt );
-				
+			if(is_moving && room_users_list[i].id!=myProfile.id ){			
 				characters_list[i].moveLocal( room_users_list[i].fut_pos );
 				characters_list[i].anim_name = "walking";
 				characters_list[i].dance = false;
 				characters_list[i].position = walk_area.adjustPosition( characters_list[i].position );
 				room_users_list[i].fut_pos=[0,0,0];
-				characters_list[i].position=room_users_list[i].pos;
-				
-				
+				characters_list[i].position=room_users_list[i].pos;				
 			}
 			else if(room_users_list[i].id!=myProfile.id && is_moving==false){
 				characters_list[i].anim_name = characters_list[i].dance ? "dancing" : "idle";
-				//console.log("quieto");
 			}
 			
 			//rotation de cada character
 			if(room_users_list[i].fut_rot!=0){
 				characters_list[i].rotation=room_users_list[i].fut_rot_aux;
-				//characters_list[i].rotate(room_users_list[i].fut_rot,[0,1,0]);
 				room_users_list[i].rot=room_users_list[i].fut_rot_aux;
 				room_users_list[i].fut_rot=0;
 				
-				
-			}
+			}			
 			
-			
-		}
-		
+		}	
 			
 	}
-	//example of how to blend two animations
-	//animations.idle.assignTime( t, true );
-	//animations.walking.assignTime( t, true );
-	//RD.Skeleton.blend( animations.idle, animations.walking, 0.5, skeleton );
 	if(characters_list.length>0){
-		var anim = animations[ characters_list[i_aux].anim_name ];
+		var anim = room_users_list[i_aux].animations[ characters_list[i_aux].anim_name ];
 		if(anim && anim.duration)
 		{
 			anim.assignTime( t, true );
@@ -190,10 +145,7 @@ function update(dt)
 			mat4.scale( m, m, [20,20,20]);
 			sphere.fromMatrix( m );
 		}
-			
 	}
-	
-
 }
 
 function userMovement( character, dt )
@@ -209,12 +161,9 @@ function userMovement( character, dt )
 	var is_moving = vec3.length(delta);
 	if(is_moving) //if moving
 	{
-		//console.log(i_aux);
 		character.moveLocal( delta );
 		character.anim_name = "walking";
 		character.dance = false;
-		
-		
 	}
 	else
 		character.anim_name = character.dance ? "dancing" : "idle";
@@ -233,7 +182,6 @@ function userMovement( character, dt )
 		rotacion=true;
 	}
 		
-	//room_users_list[i_aux].rot=room_users_list[i_aux].rot+angle;
 	character.position = walk_area.adjustPosition( character.position );
 	if(is_moving){
 		var msg = {
@@ -281,10 +229,6 @@ function onMouse(e)
 
 	if(e.dragging)
 	{
-		//camera.orbit(e.deltax * 0.01, [0,1,0] );
-		//var right = camera.getLocalVector([1,0,0]);
-		//camera.orbit(e.deltay * 0.01,right );
-
 		//rotating camera
 		camera.rotate(e.deltax * -0.01, [0,1,0] );
 		var right = camera.getLocalVector([1,0,0]);
