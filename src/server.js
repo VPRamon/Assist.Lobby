@@ -232,6 +232,11 @@ var office = function(employee_id){
 				};
 				DB.onlineEmployees[that.employee_id].connection.send(JSON.stringify( msg_emplo_user ))	// Inform employee of user arrival
 			}else{
+				let msg = {
+					type:"alert",
+					content:"No clients available"
+				}
+				DB.onlineEmployees[employee_id].connection.send(JSON.stringify(msg));
 				console.log("No clients available");
 			}
 		}else{

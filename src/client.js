@@ -105,6 +105,9 @@ function Connection(){
 			case("text"):
 				showMessage(msg, "received");
 				break;
+			case("alert"):
+				alert(msg.content);
+				break;
 				
 			case("setTicket"):
 				myProfile.ticket = msg.myTicket;
