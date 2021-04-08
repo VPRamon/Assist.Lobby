@@ -77,7 +77,6 @@ function update(dt)
 				characters_list[i].anim_name = "walking";
 				characters_list[i].dance = false;
 				characters_list[i].position = walk_area.adjustPosition( characters_list[i].position );
-				room_users_list[i].fut_pos=[0,0,0];
 				characters_list[i].position=room_users_list[i].pos;				
 			}
 			else if(room_users_list[i].id!=myProfile.id && is_moving==false){
@@ -189,6 +188,16 @@ function userMovement( character, dt )
 			id:myProfile.id ,
 			pos:character.position,
 			fut_pos:delta,
+			dt:dt
+		};
+
+		socket.socket.send(JSON.stringify( msg ));
+	}else{
+			var msg = {
+			type: "move",
+			id:myProfile.id ,
+			pos:character.position,
+			fut_pos:[0,0,0],
 			dt:dt
 		};
 

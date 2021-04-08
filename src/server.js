@@ -395,8 +395,8 @@ function onUserLogin( connection, info ){
 		}
 		else{
 			let msg = {
-				type: "register",
-				role: "client",
+				type: "login",
+				role: "error",
 				id: -1,
 				username: info.username
 			};

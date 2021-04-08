@@ -97,8 +97,8 @@ function Connection(){
 
 	this.socket.onmessage = function(message){  
 		
-		console.log("Received: message");  
-		console.log(message.data);
+		//console.log("Received: message");  
+		//console.log(message.data);
 		
 		var msg = JSON.parse(message.data);	
 		switch(msg.type){			
@@ -187,7 +187,7 @@ function Connection(){
 						//console.log(msg.fut_pos)
 						room_users_list[i].pos = msg.pos;
 						room_users_list[i].fut_pos = msg.fut_pos;
-						room_users_list[i].dt = msg.dt;
+						//room_users_list[i].dt = msg.dt;
 					}
 				}
 				break;
