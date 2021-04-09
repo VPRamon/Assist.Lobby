@@ -1,0 +1,46 @@
+# Blender MTL File: 'Traditional Desk.blend'
+# Material Count: 4
+
+newmtl MetalBlack
+Ns 575.999996
+Ka 1.000000 1.000000 1.000000
+Kd 0.000000 0.000000 0.000000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 3
+
+newmtl Wood_Bar&Board
+Ns 575.999996
+Ka 1.000000 1.000000 1.000000
+Kd 0.017388 0.000000 0.000224
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Texture\\Desk\\Wood_Bar&Board.png
+
+newmtl Wood_Drawer
+Ns 575.999996
+Ka 1.000000 1.000000 1.000000
+Kd 0.800000 0.800000 0.800000
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Bump -bm 0.500000 Texture\\Desk\\Wood_Drawer_N.png
+map_Kd Texture\\Desk\\Wood_Drawer.png
+
+newmtl Wood_Main
+Ns 575.999996
+Ka 1.000000 1.000000 1.000000
+Kd 0.021979 0.001755 0.002541
+Ks 0.500000 0.500000 0.500000
+Ke 0.000000 0.000000 0.000000
+Ni 1.450000
+d 1.000000
+illum 2
+map_Kd Texture\\Desk\\Wood_DeskMain.png

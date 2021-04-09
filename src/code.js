@@ -12,13 +12,6 @@ gl.onmouse = onMouse;
 gl.onkeydown = onKey;
 
 
-
-
-//camera
-var camera = new RD.Camera();
-camera.lookAt([0,1.5,2.8],[0,1,0],[0,1,0]); //to set eye,center and up
-camera.fov = 60;
-
 //renderer of the scene
 var renderer = new RD.Renderer(gl);
 
@@ -104,46 +97,8 @@ function update(dt)
 			characters_list[i_aux].skeleton = anim.skeleton; //this could be useful
 		}
 
-		//input
-		if(freecam)
-		{
-			//free camera
-			var delta = [0,0,0];
-			if( gl.keys["W"] )
-				delta[2] = -1;
-			else if( gl.keys["S"] )
-				delta[2] = 1;
-			if( gl.keys["A"] )
-				delta[0] = -1;
-			else if( gl.keys["D"] )
-				delta[0] = 1;
-			camera.moveLocal(delta,dt * 10);
-		}
-		else
-			userMovement( characters_list[i_aux], dt );
+		userMovement( characters_list[i_aux], dt );
 
-		//example of ray test from the character with the environment (layer 0b1)
-		if(0)
-		{
-			var center = characters_list[i_aux].localToGlobal([0,70,0]);
-			var forward = characters_list[i_aux].getLocalVector([0,0,1]);
-			vec3.normalize( forward, forward );
-			var ray = new GL.Ray(center,forward);
-			var coll_node = scene.testRay( ray,null,100,1 );
-			if(coll_node)
-				sphere.position = ray.collision_point;
-		}
-
-		//example of placing object in head of character
-		if(0 && characters_list[i_aux].skeleton)
-		{
-			var head_matrix = characters_list[i_aux].skeleton.getBoneMatrix("mixamorig_Head", true);
-			var gm = characters_list[i_aux].getGlobalMatrix();
-			var m = mat4.create();
-			mat4.multiply( m, gm, head_matrix );
-			mat4.scale( m, m, [20,20,20]);
-			sphere.fromMatrix( m );
-		}
 	}
 }
 
@@ -165,7 +120,7 @@ function userMovement( character, dt )
 		character.dance = false;
 	}
 	else
-		character.anim_name = character.dance ? "dancing" : "idle";
+		character.anim_name = "idle";
 	
 	var rotacion=false;
 	var angle=0;
@@ -222,41 +177,11 @@ function onMouse(e)
 {
 	//console.log(e);
 
-	if(e.type == "mousedown")
-	{
-		var ray = camera.getRay( e.canvasx, e.canvasy );
-		var coll_node = scene.testRay(ray);
-		if(coll_node)
-		{
-			//console.log(coll_node.name, ray.collision_point);
-			if( coll_node.is_character ) //if character clicked
-			{
-				//...
-			}
-		}
-	}
-
-	if(e.dragging)
-	{
-		//rotating camera
-		camera.rotate(e.deltax * -0.01, [0,1,0] );
-		var right = camera.getLocalVector([1,0,0]);
-		camera.rotate(e.deltay * -0.01,right );
-	}
 }
 
 function onKey(e)
 {
-	//console.log(e);
-	if(e.key == "Tab")
-	{
-		freecam = !freecam;
-		e.preventDefault();
-		e.stopPropagation();
-		return true;
-	}
-	else if(e.code == "Space")
-		characters_list[i_aux].dance = !characters_list[i_aux].dance;
+	
 }
 
 

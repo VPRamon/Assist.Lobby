@@ -194,7 +194,8 @@ var office = function(employee_id){
 	
 	this.onNextClient = function(callToken){
 		
-		if(that.is_free == true){	// to do (chech if ANY client in waiting rooms, ont just i first)			
+		if(that.is_free == true){	// to do (chech if ANY client in waiting rooms, ont just i first)
+			
 			let next_cat = 0;			// Search next client
 			let next_room = 0;			// Search next client
 			let lower_ticket = Infinity; // DB.list_of_cat[category][0].userTicket();
@@ -209,14 +210,22 @@ var office = function(employee_id){
 				}
 			}
 			if(lower_ticket < Infinity){
-				that.is_free = false;		// Set office as occupied
+				that.is_free = false;		// Set office as occupied				
+				let msg = {
+					type:"NumOfClients",
+					content:(DB.awaitingClients-1)
+				}
+				console.log("updating awaiting, sending ",DB.awaitingClients-1);
+				DB.broadcast(user_id, JSON.stringify(msg), "employee")
+				DB.awaitingClients -=1;
+				
 				that.client_id = DB.list_of_cat[next_cat][next_room].onUserDeparts();
 				DB.actualTicket = lower_ticket
 				msg = {
 					type:"ticket",
 					content:DB.actualTicket
 				}
-				DB.broadcast(that.client_id, JSON.stringify(msg));
+				DB.broadcast(that.client_id, JSON.stringify(msg), "client");
 				console.log("Client found! wellcome: ", that.client_id);
 				DB.onlineClients[that.client_id].room = that.id;
 				var msg_user_emplo = {
@@ -254,6 +263,25 @@ var office = function(employee_id){
 				console.log("unkown sender!");
 		}
 	}
+	
+	this.onResolveClient = function(){
+		if(that.is_free){
+			let msg = {
+				type:"alert",
+				content:"There is no client in the room!"
+			}
+			let employee_id = that.employee_id;
+			DB.onlineEmployees[employee_id].connection.send(JSON.stringify(msg));
+		}
+		else{			
+			let client_id = that.client_id;
+			let msg = {
+				type:"session closed"
+			}
+			DB.onlineClients[client_id].connection.send(JSON.stringify(msg));
+		}
+	}
+	
 }
 
 var Database = function(){
@@ -265,6 +293,7 @@ var Database = function(){
 	this.availableOffices = {};
 	this.lastTicket = 1;
 	this.actualTicket = 1;
+	this.awaitingClients = 0;
 	
 	this.new_wr = function(category){
 		let id = that.list_of_cat[category].length;
@@ -282,6 +311,12 @@ var Database = function(){
 	}
 	
 	this.add_user_to_wr = function(user_id, category){
+		that.awaitingClients +=1;
+		let msg = {
+			type:"NumOfClients",
+			content:that.awaitingClients
+		}
+		that.broadcast(user_id, JSON.stringify(msg), "employee")
 		let room=0;
 		for (room = 0; room < that.list_of_cat[category].length; room++) { 
 			// if room is not full -> add user
@@ -298,15 +333,23 @@ var Database = function(){
 		return room;
 	}
 
-	this.onUserDisconnected = function(user_id){
+	this.onUserDisconnected = function(user_id){		
 		if(user_id in that.onlineClients){
 			console.log("Goodbye "+that.onlineClients[user_id].username);
 			category = that.onlineClients[user_id].category;
 			room = that.onlineClients[user_id].room;
-			if(that.onlineClients[user_id].inOffice)
+			if(that.onlineClients[user_id].inOffice){
 				that.availableOffices[room].onUserLeaves();
-			else if (!that.onlineClients[user_id].inOffice)
+			}else if (!that.onlineClients[user_id].inOffice){
+				that.awaitingClients -=1;
+				let msg = {
+					type:"NumOfClients",
+					content:that.awaitingClients
+				}
+				that.broadcast(user_id, msg, "employee")
 				that.list_of_cat[category][room].onUserQuits(user_id);	// Remove user from room
+
+			}
 			delete that.onlineClients[user_id];							// Remove user from Database
 			// to do (inform clients in room)
 		}else if (user_id in that.onlineEmployees){
@@ -326,12 +369,21 @@ var Database = function(){
 		}
 	}
 	
-	this.broadcast = function(id, msg){
-		Object.keys(that.onlineClients).forEach(function(key) {
-			if( (!that.onlineClients[key].inOffice) && that.onlineClients[key].id != id){
-				that.onlineClients[key].connection.send(msg);
-			}
-		});
+	this.broadcast = function(id, msg, role){
+		if(role=="client"){
+			Object.keys(that.onlineClients).forEach(function(key) {
+				if( (!that.onlineClients[key].inOffice) && that.onlineClients[key].id != id){
+					that.onlineClients[key].connection.send(msg);
+				}
+			});
+		}
+		else if(role=="employee"){
+			Object.keys(that.onlineEmployees).forEach(function(key) {
+				//if(that.onlineEmployees[key].id != id){
+				that.onlineEmployees[key].connection.send(msg);
+				//}
+			});
+		}
 	}
 	
 }
@@ -380,16 +432,22 @@ function onUserLogin( connection, info ){
 					DB.new_office(user_id);					
 					var msg2 = {
 						type: "office",
-						content: new info_to_send(DB.onlineEmployees[user_id])
-						
+						content: new info_to_send(DB.onlineEmployees[user_id])						
 					};
 					connection.send(JSON.stringify(msg2));
+					
+					var msg3 = {
+						type: "NumOfClients",
+						content: DB.awaitingClients
+					};
+					connection.send(JSON.stringify(msg3));
+					
+					
 					//DB.availableOffices[user_id].onNextClient(1);	// to do (employee iteraction with nextClient method)
 				}else{
 					msg.role = "client";
 					DB.onlineClients[user_id] = new user(connection, user_id, info.username);
 					connection.send(JSON.stringify(msg));
-
 				}
 			}
 		}
@@ -518,6 +576,16 @@ function onNextClient(connection, callToken){
 	DB.availableOffices[employee_id].onNextClient(callToken);	// to do (employee iteraction with nextClient method)
 }
 
+function onResolveClient(connection){
+	let employee_id = connection.id;
+	DB.availableOffices[employee_id].onResolveClient();
+}
+
+function onDisplayProduct(connection, product){
+	let employee_id = connection.id;
+	DB.availableOffices[employee_id].sendMessage(product);	
+}
+
 // call when we a user updates its position
 function onUserUpdate( connection, msg ,move){
 	user_id = connection.id;
@@ -603,6 +671,14 @@ wsServer.on('request', function(request) {
 					
 				case("nextClient"):
 					onNextClient( connection, msg.callToken);
+					break;
+				
+				case("resolveClient"):
+					onResolveClient( connection );
+					break;
+					
+				case("displayProduct"):
+					onUserMessage( connection, message.utf8Data );
 					break;
 			}
         }

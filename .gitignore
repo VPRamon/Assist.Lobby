@@ -115,5 +115,3 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-# Heavy files
-resources/data/

@@ -14,11 +14,12 @@ function showMessage(txt){};
 function clearChat(){};
 function changeTitle(employee_username){};
 function updateTicket(ticket){};
+function updateNoC(){};
 
 //scene container
 var scene = new RD.Scene();
 var walk_area = new WalkArea();
-walk_area.addRect([-1.8,0.1,-0.8],3.6,1.6);
+walk_area.addRect([-2.6,0.1,-1.2],5.2,2.4);
 var CHARACTERS_LAYER = 4; //4 is 100 in binary
 
 var room_node_externo = new RD.SceneNode();
@@ -49,18 +50,22 @@ room_node.name = "room";
 room_node.flags.two_sided = true;
 room_node.mesh = "resources/data/room.obj";
 room_node.textures.color = "resources/data/room.png";
+room_node.scale(1.5);
 room_node.position=[0,0.01,0];
 scene.root.addChild( room_node );
 
 
-var products = ["resources/comp1.png",
+var products = ["resources/wellcome.png",
+				"resources/comp1.png",
 				"resources/comp2.png"];
 
 var animations1 = {};
 var animations2 = {};
 var animations3 = {};
 
-
+var camera = new RD.Camera();
+camera.lookAt([0,2,4],[0,1.4,0],[0,1,0]); //to set eye,center and up
+camera.fov = 60;
 
 function loadAnimation( list, name, url )
 {
@@ -72,20 +77,17 @@ function loadAnimation( list, name, url )
 
 animations1=loadAnimation(animations1,"idle", "resources/data/boy/animations_breathingidle.skanim");
 animations1=loadAnimation(animations1,"walking", "resources/data/boy/animations_strutwalking.skanim");
-animations1=loadAnimation(animations1,"dancing", "resources/data/boy/animations_snakehiphopdance.skanim");
 
 animations2=loadAnimation(animations2,"idle", "resources/data/anims/girl_idle.skanim");
 animations2=loadAnimation(animations2,"walking", "resources/data/anims/girl_walking.skanim");
-animations2=loadAnimation(animations2,"dancing", "resources/data/anims/girl_dancing.skanim");
 
 animations3=loadAnimation(animations3,"idle", "resources/data/doozy/animations_oldmanidle.skanim");
 animations3=loadAnimation(animations3,"walking", "resources/data/doozy/animations_scaryclownwalk.skanim");
-animations3=loadAnimation(animations3,"dancing", "resources/data/doozy/animations_twistdance.skanim");
 
 function Connection(){
 	that = this;
-	//this.socket = new WebSocket("wss://ecv-etic.upf.edu/node/9022/ws/" );	
-	this.socket = new WebSocket("ws://127.0.0.1:9022" );
+	this.socket = new WebSocket("wss://ecv-etic.upf.edu/node/9022/ws/" );	
+	//this.socket = new WebSocket("ws://127.0.0.1:9022" );
 	
 	this.socket.onopen = function(){  
 		console.log("Socket has been opened! :)");		
@@ -105,17 +107,31 @@ function Connection(){
 			case("text"):
 				showMessage(msg, "received");
 				break;
+				
 			case("alert"):
 				alert(msg.content);
 				break;
+			
 				
 			case("setTicket"):
 				myProfile.ticket = msg.myTicket;
 				updateTicket(msg.lastTicket+'/'+myProfile.ticket, "set");
 				break;
+				
 			case("ticket"):
 				let ticket = msg.content;
 				updateTicket(ticket, "update");
+				break;
+				
+			case("NumOfClients"):
+				console.log(msg.content);
+				let Nclients = msg.content;
+				updateNoC(Nclients);
+				break;
+			
+			case("displayProduct"):
+				let product = msg.content;
+				applyProduct(product);
 				break;
 				
 			case("user_list"):
@@ -222,6 +238,12 @@ function Connection(){
 				break;
 				
 			case("office"):
+				camera.lookAt([0,1.5,2.8],[0,1,0],[0,1,0]); //to set eye,center and up
+                camera.fov = 60;
+
+                var walk_area_1 = new WalkArea();
+                walk_area_1.addRect([-1.8,0.1,-0.8],2.6,1.6);
+                walk_area=walk_area_1;
 				console.log("preparing office");
 				clearChat();
 				changeTitle( msg.content.username);
@@ -231,14 +253,16 @@ function Connection(){
 					joinRoom(msg.callToken);
 				}
 				// to do msg.id = undefied
-				for(var i = 1; i < room_users_list.length; i++){
-					if(room_users_list[i].id!=msg.id){
-						room_users_list.splice(i,1);
-						characters_list.splice(i,1);
-						var node_to_delete=scene.root.getAllChildren();
-						scene.root.removeChild(node_to_delete[i+4]);
-					}
-				}
+				let len1 = room_users_list.length;
+                for(var i = 1; i < room_users_list.length; i++){
+                    if(room_users_list[i].id!=msg.id){
+                        room_users_list.splice(i,1);
+                        characters_list.splice(i,1);
+                        var node_to_delete=scene.root.getAllChildren();
+                        scene.root.removeChild(node_to_delete[node_to_delete.length-len1+i]);
+                        len1=len1-1;
+                    }
+                }
 				var node_to_delete=scene.root.getAllChildren();
 				// to do (David)
                 for(var i =1;i<node_to_delete.length;i++){
@@ -248,7 +272,7 @@ function Connection(){
                 room_node.name = "room";
                 room_node.flags.two_sided = true;
                 room_node.mesh = "resources/data/room.obj";
-                room_node.textures.color = "resources/data/room.png";
+                room_node.textures.color = "resources/data/room_office.png";
                 room_node.position=[0,0.01,0];
                 scene.root.addChild( room_node );
 				
@@ -256,9 +280,9 @@ function Connection(){
 				panel.id = "panel";
 				panel.name = "panel";
 				panel.mesh = "resources/panel.obj";
-				panel.texture = "resources/comp1.png";
-				panel.position=[-.75,1,-.9];
-				panel.scale([1, .75, 1]);
+				panel.texture = "resources/wellcome.png";
+				panel.position=[-.65,1,-.9];
+				panel.scale([1.25, .75, 1]);
 				scene.root.addChild( panel );
 				
                 var table = new RD.SceneNode();
@@ -270,10 +294,19 @@ function Connection(){
                 table.rotation=[0,-0.7,0,0.7];
 
                 scene.root.addChild( table );
-                scene.root.addChild( node_to_delete[node_to_delete.length-1] );
+				if(room_users_list.length>0){
+					if(node_to_delete[node_to_delete.length-1].position[0] <-1.8 || node_to_delete[node_to_delete.length-1].position[0]> 0.8 || node_to_delete[node_to_delete.length-1].position[2]<-0.8 || node_to_delete[node_to_delete.length-1].position[0]>0.8 ){
+						node_to_delete[node_to_delete.length-1].position=[0,0,0];
+					}
+					scene.root.addChild( node_to_delete[node_to_delete.length-1] );
+				}
+                
 				
 				//console.log(msg.content);
 				room_users_list.push(msg.content);
+				if(room_users_list[room_users_list.length-1].pos[0] <-1.8 || room_users_list[room_users_list.length-1].pos[0]> 0.8 || room_users_list[room_users_list.length-1].pos[2]<-0.8 || room_users_list[room_users_list.length-1].pos[0]>0.8 ){
+                    room_users_list[room_users_list.length-1].pos=[0,0,0];
+                }
 				if(msg.content.type==2){
                     console.log("entra");
                     room_users_list[room_users_list.length-1].animations=animations3;
@@ -293,7 +326,7 @@ function Connection(){
 				character.layers = CHARACTERS_LAYER; //layer 0b1 and 0b10 is for objects, layer 0b100 for characters
 				character.is_character = true; //in case we want to know if an scene node is a character
 				character.scale(0.01);
-				character.position=msg.content.pos;
+				character.position=room_users_list[room_users_list.length-1].pos;
 				character.rotation=msg.content.rot;
 				character.mesh = msg.content.skin;
                 character.texture = msg.content.texture;
@@ -323,6 +356,7 @@ function Connection(){
 				
 			case("session closed"):
 				location.reload();
+				break;
 		}
 			
 	}
@@ -374,6 +408,13 @@ function nextClient(category){
 	socket.socket.send(JSON.stringify( msg ));
 }
 
+function resolveClient(){
+	var msg = {
+		type: "resolveClient"
+	};
+	socket.socket.send(JSON.stringify( msg ));
+}
+
 function sendMessage(txt){
 	var msg = {
 		type: "text",
@@ -384,11 +425,4 @@ function sendMessage(txt){
 	//console.log("Senidng message", JSON.stringify( msg ));
 	showMessage(msg, "send");
 	socket.socket.send(JSON.stringify( msg ));
-}
-
-function changeProduct(i){
-	let node = scene.getNodeById("panel");
-	//console.log(node);
-	if(i>0 && i< products.length)
-		node.texture = products[i];
 }

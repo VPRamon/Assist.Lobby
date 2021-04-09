@@ -59,12 +59,19 @@
 			<img id="imageClose" class="imageClose" src="resources/close.png" />
 			<img id="imageChat" class="imageChat" src="resources/chat_icon.png" />
 			<img id="imageNext" class="imageNext hidden" src="resources/next.png" />
+			<img id="imageResolve" class="imageNext hidden" src="resources/resolve.png" />
 			
 			<div id="ticketContainer" class="ticketContainer">
 				<img src="resources/ticket.png" width="100" height="100"/>
 				<div id="ticket_txt" class="textTicket"></div>
 			</div>
-
+			
+			<select id="products_dropDown" class= "drop_down_products hidden">
+				<option>Wellcome</option>
+				<option>HP 15S</option>
+				<option>MSI GL65</option>
+			</select>
+			<img id="imageApply" class="imageApply hidden" src="resources/apply.png" onclick="sendProduct()" />
 		
 			<div id="id_chat_container" class="chat_container hidden" >
 				<p id="chat_title" class="chat_title">Chat</p>
@@ -74,6 +81,8 @@
 					<button id="sendMessage_btn">SEND</button>			
 				</div>
 			</div>
+			
+
 			
 		</div>
 		<audio id="remote-audio"></audio>

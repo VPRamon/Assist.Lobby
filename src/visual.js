@@ -6,66 +6,11 @@ var register_btn= document.querySelector("#register_btn");
 var enterRoom_btn= document.querySelector("#enterRoom_btn");
 var unfoldChat_btn= document.querySelector("#imageChat");
 var nextClient_btn= document.querySelector("#imageNext");
+var resolve_btn= document.querySelector("#imageResolve");
 var close_btn= document.querySelector("#imageClose");
 
 var canvas = document.querySelector("#canvas");
 //var ctx = canvas.getContext('2d');
-
-var list_of_skins=[];
-
-var img_man1 = new Image();
-var img_man2 = new Image();
-var img_man3 = new Image();
-var img_man4 = new Image();
-var img_woman1 = new Image();
-var img_woman2 = new Image();
-var img_woman3 = new Image();
-var img_woman4 = new Image();
-img_man1.src = "resources/spritesheets/man1-spritesheet.png"	
-img_man2.src = "resources/spritesheets/man2-spritesheet.png"	
-img_man3.src = "resources/spritesheets/man3-spritesheet.png"	
-img_man4.src = "resources/spritesheets/man4-spritesheet.png"	
-img_woman1.src = "resources/spritesheets/woman1-spritesheet.png"	
-img_woman2.src = "resources/spritesheets/woman2-spritesheet.png"	
-img_woman3.src = "resources/spritesheets/woman3-spritesheet.png"	
-img_woman4.src = "resources/spritesheets/woman4-spritesheet.png"	
-list_of_skins.push(img_man1);
-list_of_skins.push(img_man2);
-list_of_skins.push(img_man3);
-list_of_skins.push(img_man4);
-list_of_skins.push(img_woman1);
-list_of_skins.push(img_woman2);
-list_of_skins.push(img_woman3);
-list_of_skins.push(img_woman4);
-
-var x_0=0;//canvas.width/2;
-var y_0=0;//canvas.height/2;
-var x_f=x_0;
-var y_f=y_0;
-
-//last stores timestamp from previous frame
-var mouse_pos = [0,0];
-var dx = 0;
-var dy = 0;
-
-var walking = [2,3,4,5,6,7,8,9];
-var standing = [0,1];
-var moving = 0;
-var speed = 100;
-var direction = 1;  /* 0:right, 1:down, 2:left, 3:up */
-var imgs = {};
-
-function getImage(url) {
-	//check if already loaded
-	if(imgs[url])
-		return imgs[url];
-
-
-	//if no loaded, load and store
-	var img = imgs[url] = new Image();
-	img.src = url;
-	return img;
-}
 
 function scrollToEnd(){
 	var chat = document.getElementById("id_messages_container");
@@ -121,7 +66,11 @@ function loginResponse(pass){
 			document.getElementById("popup-loginMenu").classList.toggle("active");	
 			document.getElementById('content').classList.toggle('hidden');
 			document.getElementById('imageNext').classList.toggle('hidden');
-			document.getElementById('ticketContainer').classList.toggle('hidden');
+			document.getElementById('imageResolve').classList.toggle('hidden');
+			//document.getElementById('ticketContainer').classList.toggle('hidden');
+			document.getElementById('products_dropDown').classList.toggle('hidden');
+			document.getElementById('imageApply').classList.toggle('hidden');
+
 			// Generate unique token for p2p call
 			myProfile.uniqueToken = Math.random().toString(36).replace('.','');
 			//console.log("creating peer");
@@ -218,6 +167,11 @@ nextClient_btn.addEventListener("click",function(e){
 	nextClient('Computers');
 });
 
+resolve_btn.addEventListener("click",function(e){
+	console.log("resolve");
+	resolveClient();
+});
+
 close_btn.addEventListener("click",function(e){
 	location.reload();
 });
@@ -245,9 +199,6 @@ function displayMenu(box){
 		document.getElementById('passwordLogin_txt').value = '';
 		document.getElementById('usernameRegister_txt').value = '';
 		document.getElementById('passwordRegister_txt').value = '';
-
-
-		
 	}	
 }
 
@@ -264,6 +215,8 @@ function setChatPosition(){
 
 	document.getElementById("imageNext").style.bottom = 10;
 	document.getElementById("imageNext").style.right = canvas_x_coord + 10;
+	document.getElementById("imageResolve").style.bottom = 55;
+	document.getElementById("imageResolve").style.right = canvas_x_coord + 10;
 	
 	document.getElementById("imageClose").style.top = canvas_y_coord + 5;
 	document.getElementById("imageClose").style.left = canvas_x_coord + 5;
@@ -272,7 +225,44 @@ function setChatPosition(){
 	document.getElementById("ticketContainer").style.top = canvas_y_coord;
 	document.getElementById("ticketContainer").style.left = canvas_x_coord + canvas_width/2 - ticketContainer_width/2;
 	
+	document.getElementById("products_dropDown").style.bottom = 10;
+	document.getElementById("products_dropDown").style.left = canvas_x_coord + 5;
+	document.getElementById("imageApply").style.bottom = 20;
+	document.getElementById("imageApply").style.left = canvas_x_coord + 170;
+
 }
 
+function sendProduct(){
+	product = document.querySelector("#products_dropDown").value;
+	console.log(product);
+	let msg = {
+		type:"displayProduct",
+		content:product
+	}
+	socket.socket.send(JSON.stringify(msg));
+	
+	//console.log(node);
+	applyProduct(product)
+}
+
+
+function applyProduct(product){
+	let node = scene.getNodeById("panel");
+	switch(product){
+		case("HP 15S"):
+			node.texture = products[1];
+			break;
+		case("MSI GL65"):
+			node.texture = products[2];
+			break;
+		default:
+			node.texture = products[0];
+			break;
+	}
+}
+
+function updateNoC(NoC){
+	document.getElementById("ticket_txt").innerHTML = "Awaiting: "+NoC;
+}
 
 
