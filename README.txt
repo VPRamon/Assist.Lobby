@@ -32,5 +32,4 @@ ramon.valles02@estudiant.upf.edu
    * Make FAQS book functional (waiting room).
 
 
-Presentation: https://youtu.be/gt4-AErWzBU
 resources can be download here: https://mega.nz/file/UAl0TR4B#fizDodUsBwhQWDyFhT1OckReXxJbTKoq_xTg20HgcpI
